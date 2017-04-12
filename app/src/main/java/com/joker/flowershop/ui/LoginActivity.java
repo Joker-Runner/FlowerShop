@@ -32,10 +32,18 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.joker.flowershop.R;
+
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
@@ -348,7 +356,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     }
 
     /**
-     * 异步任务：用于登录注册用户。
+     * 异步任务：用于登录/注册用户。
      */
     public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
 
@@ -363,24 +371,25 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         @Override
         protected Boolean doInBackground(Void... params) {
             // TODO: attempt authentication against a network service.
-
+            String responseData = null;
             try {
-                // 模仿网络连接
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                return false;
+                RequestBody requestBody = new FormBody.Builder()
+                        .add("username",mEmail).add("password",mPassword).build();
+                Request request = new Request.Builder().url("http://192.168.31.191:8080/login")
+                        .post(requestBody).build();
+                Response response = new OkHttpClient().newCall(request).execute();
+                responseData = response.body().string();
+
+            } catch (IOException e) {
+                e.printStackTrace();
             }
 
-            for (String credential : DUMMY_CREDENTIALS) {
-                String[] pieces = credential.split(":");
-                if (pieces[0].equals(mEmail)) {
-                    // 账户存在，验证密码
-                    return pieces[1].equals(mPassword);
-                }
+            if (responseData!=null&&responseData.equals("true")){
+                return true;
             }
+            return false;
 
             // TODO: register the new account here.
-            return true;
         }
 
         @Override
