@@ -1,18 +1,19 @@
-package com.joker.flowershop.ui;
+package com.joker.flowershop.ui.qrcode;
 
 import android.content.DialogInterface;
-import android.content.Intent;
-import android.os.Handler;
+import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.MenuItem;
 
 import com.joker.flowershop.R;
 
 import cn.bingoogolapple.qrcode.core.QRCodeView;
 
-public class ScanActivity extends AppCompatActivity implements QRCodeView.Delegate{
+/**
+ * 扫一扫的 Activity
+ */
+public class ScanActivity extends AppCompatActivity implements QRCodeView.Delegate {
 
     QRCodeView qrCodeView;
 
@@ -27,13 +28,6 @@ public class ScanActivity extends AppCompatActivity implements QRCodeView.Delega
         qrCodeView.setDelegate(this);
         qrCodeView.startCamera();
         qrCodeView.startSpot();
-//        new Handler().postDelayed(new Runnable() {
-//            @Override
-//            public void run() {
-//                Intent intent = new Intent(ScanActivity.this,Scan1Activity.class);
-//                startActivity(intent);
-//            }
-//        },2*1000);
     }
 
     @Override

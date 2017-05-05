@@ -7,7 +7,7 @@
     <uses-permission android:name="android.permission.READ_PROFILE" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
         android:allowBackup="true"
@@ -29,9 +29,11 @@
         <activity
             android:name=".ui.LoginActivity"
             android:label="@string/title_activity_login" />
-        <activity android:name=".ui.SignUpActivity"
-            android:label="@string/title_activity_sign_up"/>
-        <activity android:name=".ui.ScanActivity"/>
+        <activity
+            android:name=".ui.SignUpActivity"
+            android:label="@string/title_activity_sign_up" />
+        <activity android:name=".ui.qrcode.ScanActivity" />
+        <activity android:name=".ui.qrcode.ScanResultActivity" />
     </application>
 
 </manifest>

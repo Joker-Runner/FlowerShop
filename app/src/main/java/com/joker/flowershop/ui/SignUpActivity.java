@@ -30,6 +30,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.joker.flowershop.R;
+import com.joker.flowershop.utils.Constants;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,6 +44,9 @@ import okhttp3.Response;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
+/**
+ * 用户注册的 Activity
+ */
 public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks<Cursor> {
 
     /**
@@ -357,8 +361,8 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
             try {
                 RequestBody requestBody = new FormBody.Builder()
                         .add("username", mEmail).add("password", mPassword).build();
-                Request request = new Request.Builder().url("http://123.206.201.169:8080/FlowerShop/sign_up")
-                        .post(requestBody).build();
+                Request request = new Request.Builder()
+                        .url(Constants.getURL() + "/sign_up").post(requestBody).build();
                 Response response = new OkHttpClient().newCall(request).execute();
                 responseData = response.body().string();
 
@@ -373,7 +377,6 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
         protected void onPostExecute(final Boolean success) {
             mAuthTask = null;
             showProgress(false);
-
             if (success) {
                 //注册成功，跳转到登录界面，并返回用户名
                 Bundle bundle = new Bundle();

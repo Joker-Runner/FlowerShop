@@ -7,6 +7,7 @@ import android.app.LoaderManager.LoaderCallbacks;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
@@ -30,6 +31,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.joker.flowershop.R;
+import com.joker.flowershop.utils.Constants;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -79,6 +81,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     // 设置返回给MainActivity数据的Intent
     private Intent intent;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -126,15 +129,22 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         intent = new Intent(this, MainActivity.class);
     }
 
+    /**
+     * 启动注册Activity的回调函数
+     *
+     * @param requestCode 请求码
+     * @param resultCode 结果码
+     * @param data 数据Intent
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        String email = (String) data.getExtras().getCharSequence("email");
         switch (resultCode) {
             case 1:
-                mEmailView.setText(email);
-//                nav_icon.setImageResource(R.drawable.icon_default);
-//                logined = true;
+                if (data != null) {
+                    String email = (String) data.getExtras().getCharSequence("email");
+                    mEmailView.setText(email);
+                }
                 break;
             default:
                 break;
@@ -385,8 +395,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             try {
                 RequestBody requestBody = new FormBody.Builder()
                         .add("username", mEmail).add("password", mPassword).build();
-                Request request = new Request.Builder().url("http://123.206.201.169:8080/FlowerShop/login")
-                        .post(requestBody).build();
+                Request request = new Request.Builder()
+                        .url(Constants.getURL() + "/login").post(requestBody).build();
                 Response response = new OkHttpClient().newCall(request).execute();
                 responseData = response.body().string();
 

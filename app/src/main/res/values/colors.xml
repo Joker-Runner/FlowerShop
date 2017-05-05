@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="colorPrimary">#E53935</color>
-    <color name="colorPrimaryDark">#C62828</color>
+    <color name="colorPrimaryDark">#E53935</color>
     <color name="colorAccent">#E53935</color>
+
+    <color name="colorStatusBar">#E53935</color>
+    <color name="colorNavigationBar">@android:color/black</color>
+    <color name="colorDrawerArrow">@android:color/white</color>
+
     <color name="colorBackground">#FAFAFA</color>
     <color name="colorWhite">#FFFFFF</color>
+
+    <color name="colorBlank">#000000</color>
 </resources>

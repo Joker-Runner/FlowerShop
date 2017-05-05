@@ -19,6 +19,7 @@ import android.text.TextPaint;
 import android.util.AttributeSet;
 
 /**
+ * 圆形图标的工具类
  * @author Phil
  */
 public class CircleImageView extends android.support.v7.widget.AppCompatImageView {

@@ -1,9 +1,11 @@
 package com.joker.flowershop.ui;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -14,23 +16,28 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.joker.flowershop.R;
+import com.joker.flowershop.ui.fragment.HomeFragment;
+import com.joker.flowershop.ui.qrcode.ScanActivity;
 
+/**
+ * MainActivity
+ */
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private ImageView nav_icon; // 头像
     private TextView userName; //用户名
-    private static boolean logined = false; // 是否已经登录
 
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setTheme(R.style.AppTheme_NoActionBar);
-        this.getWindow().setBackgroundDrawableResource(R.drawable.login_bg);
+        this.getWindow().setBackgroundDrawableResource(R.drawable.main_activity_bg);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -45,26 +52,44 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         View headerView = navigationView.inflateHeaderView(R.layout.nav_header_main);
-        nav_icon = (ImageView) headerView.findViewById(R.id.nav_icon);
         userName = (TextView) headerView.findViewById(R.id.nav_user_name);
-        if (logined) {
+        nav_icon = (ImageView) headerView.findViewById(R.id.nav_icon);
+        sharedPreferences = getSharedPreferences("logined", MODE_APPEND);
+        editor = sharedPreferences.edit();
+        if (sharedPreferences.getBoolean("logined", false)) {
             nav_icon.setImageResource(R.drawable.icon_default);
             userName.setText("Joker_Runner");
         }
-
         nav_icon.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (logined) {
-                    Toast.makeText(MainActivity.this, "已经登录", Toast.LENGTH_LONG).show();
+                if (sharedPreferences.getBoolean("logined", false)) {
+//                    Toast.makeText(MainActivity.this, "已经登录", Toast.LENGTH_LONG).show();
                 } else {
                     Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                     startActivityForResult(intent, 0);
-//                    overridePendingTransition(R.anim.activity_open,0);
                     drawer.closeDrawers();
                 }
             }
         });
+
+        HomeFragment homeFragment = new HomeFragment();
+        setMainContent(homeFragment);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    /**
+     * 设置 HomeActivity 的内容
+     *
+     * @param fragment 要呈现的 Fragment
+     */
+    public void setMainContent(Fragment fragment) {
+        getSupportFragmentManager().beginTransaction().
+                replace(R.id.main_container, fragment).commit();
     }
 
     @Override
@@ -73,7 +98,7 @@ public class MainActivity extends AppCompatActivity
         switch (resultCode) {
             case 1:
                 nav_icon.setImageResource(R.drawable.icon_default);
-                logined = true;
+                editor.putBoolean("logined", true).commit();
                 break;
             default:
                 break;

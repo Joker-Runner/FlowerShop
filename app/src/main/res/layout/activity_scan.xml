@@ -5,7 +5,7 @@
     android:id="@+id/activity_scan"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.joker.flowershop.ui.ScanActivity">
+    tools:context="com.joker.flowershop.ui.qrcode.ScanActivity">
 
     <cn.bingoogolapple.qrcode.zxing.ZXingView
         android:id="@+id/zxing_view"
