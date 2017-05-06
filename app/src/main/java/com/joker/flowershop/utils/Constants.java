@@ -6,16 +6,23 @@ package com.joker.flowershop.utils;
  */
 public class Constants {
 
-    public static final String IP = "123.206.201.169";
-//    public static final String IP = "192.168.31.191";
-    public static final String PORT = "8080";
+    /**
+     * IP 和端口号
+     */
+    private static final String IP = "123.206.201.169";
+    //    public static final String IP = "192.168.31.191";
+    private static final String PORT = "8080";
+    // 获取URL(获取到项目根目录)
+    public static String getURL() {
+        return "http://" + IP + ":" + PORT + "/FlowerShop";
+    }
 
     /**
-     * 获取URL(获取到项目根目录)
-     *
-     * @return 返回URL
+     * 初始化设置 SharedPreferences
      */
-    public static String getURL(){
-        return "http://"+ IP+":"+PORT+"/FlowerShop";
-    }
+    public static final String INIT_SETTING_SHARED = "init_sharedPreferences";
+    // 是否已登录
+    public static final String LOGGED_IN = "logged_in";
+
+
 }

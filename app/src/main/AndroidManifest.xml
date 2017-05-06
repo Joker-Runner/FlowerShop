@@ -34,6 +34,8 @@
             android:label="@string/title_activity_sign_up" />
         <activity android:name=".ui.qrcode.ScanActivity" />
         <activity android:name=".ui.qrcode.ScanResultActivity" />
+        <activity android:name=".ui.FlowerDetailActivity" />
+        <activity android:name=".ui.SettingActivity"></activity>
     </application>
 
 </manifest>

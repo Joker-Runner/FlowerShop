@@ -3,6 +3,7 @@ package com.joker.flowershop.ui;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
@@ -16,16 +17,21 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.joker.flowershop.R;
 import com.joker.flowershop.ui.fragment.HomeFragment;
+import com.joker.flowershop.ui.fragment.ShoppingCartFragment;
 import com.joker.flowershop.ui.qrcode.ScanActivity;
+import com.joker.flowershop.utils.Constants;
 
 /**
  * MainActivity
  */
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+
+    private DrawerLayout drawer;
 
     private ImageView nav_icon; // 头像
     private TextView userName; //用户名
@@ -42,7 +48,7 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        final DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
@@ -54,24 +60,8 @@ public class MainActivity extends AppCompatActivity
         View headerView = navigationView.inflateHeaderView(R.layout.nav_header_main);
         userName = (TextView) headerView.findViewById(R.id.nav_user_name);
         nav_icon = (ImageView) headerView.findViewById(R.id.nav_icon);
-        sharedPreferences = getSharedPreferences("logined", MODE_APPEND);
+        sharedPreferences = getSharedPreferences(Constants.INIT_SETTING_SHARED, MODE_APPEND);
         editor = sharedPreferences.edit();
-        if (sharedPreferences.getBoolean("logined", false)) {
-            nav_icon.setImageResource(R.drawable.icon_default);
-            userName.setText("Joker_Runner");
-        }
-        nav_icon.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (sharedPreferences.getBoolean("logined", false)) {
-//                    Toast.makeText(MainActivity.this, "已经登录", Toast.LENGTH_LONG).show();
-                } else {
-                    Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-                    startActivityForResult(intent, 0);
-                    drawer.closeDrawers();
-                }
-            }
-        });
 
         HomeFragment homeFragment = new HomeFragment();
         setMainContent(homeFragment);
@@ -80,6 +70,30 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
+        if (sharedPreferences.getBoolean(Constants.LOGGED_IN, false)) {
+            nav_icon.setImageResource(R.drawable.icon_default);
+            userName.setText("Joker_Runner");
+        } else {
+            nav_icon.setImageResource(R.drawable.icon_none);
+            userName.setText("登录/注册");
+        }
+        nav_icon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (sharedPreferences.getBoolean(Constants.LOGGED_IN, false)) {
+//                    Toast.makeText(MainActivity.this, "已经登录", Toast.LENGTH_LONG).show();
+                } else {
+                    drawer.closeDrawer(GravityCompat.START);
+                    new Handler().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                            startActivityForResult(intent, 0);
+                        }
+                    }, 200);
+                }
+            }
+        });
     }
 
     /**
@@ -97,8 +111,11 @@ public class MainActivity extends AppCompatActivity
         super.onActivityResult(requestCode, resultCode, data);
         switch (resultCode) {
             case 1:
-                nav_icon.setImageResource(R.drawable.icon_default);
-                editor.putBoolean("logined", true).commit();
+                if (data.getBooleanExtra("logged_in", false)) {
+                    nav_icon.setImageResource(R.drawable.icon_default);
+                    userName.setText("Joker_Runner");
+                    editor.putBoolean(Constants.LOGGED_IN, true).commit();
+                }
                 break;
             default:
                 break;
@@ -130,7 +147,8 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_search) {
+            Toast.makeText(this, "点击了搜索框", Toast.LENGTH_SHORT).show();
             return true;
         }
 
@@ -139,42 +157,51 @@ public class MainActivity extends AppCompatActivity
 
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
-    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+    public boolean onNavigationItemSelected(@NonNull final MenuItem item) {
         // Handle navigation view item clicks here.
-        int id = item.getItemId();
-
-        switch (id) {
-            case R.id.nav_home:
-                break;
-            case R.id.nav_subject:
-                break;
-            case R.id.nav_shopping_car:
-                break;
-            case R.id.nav_order:
-                break;
-            case R.id.nav_share:
-                break;
-            case R.id.nav_scan:
-                Intent intent = new Intent(this, ScanActivity.class);
-                startActivity(intent);
-                break;
-            default:
-                break;
-        }
-
-        if (id == R.id.nav_home) {
-
-        } else if (id == R.id.nav_subject) {
-
-        } else if (id == R.id.nav_shopping_car) {
-
-        } else if (id == R.id.nav_order) {
-
-        } else if (id == R.id.nav_share) {
-
-        }
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        final int id = item.getItemId();
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                switch (id) {
+                    case R.id.nav_home:
+                        HomeFragment homeFragment = new HomeFragment();
+                        setMainContent(homeFragment);
+                        break;
+                    case R.id.nav_subject:
+                        break;
+                    case R.id.nav_star:
+                        break;
+                    case R.id.nav_shopping_car:
+                        if (sharedPreferences.getBoolean(Constants.LOGGED_IN, false)) {
+                            ShoppingCartFragment shoppingCartFragment = new ShoppingCartFragment();
+                            setMainContent(shoppingCartFragment);
+                        } else {
+                            Toast.makeText(MainActivity.this, "请先登录", Toast.LENGTH_LONG).show();
+                            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                            startActivityForResult(intent, 0);
+                            item.setChecked(false);
+                        }
+                        break;
+                    case R.id.nav_order:
+                        break;
+                    case R.id.nav_scan:
+                        Intent intent = new Intent(MainActivity.this, ScanActivity.class);
+                        startActivity(intent);
+                        break;
+                    case R.id.nav_settings:
+                        Intent intent1 = new Intent(MainActivity.this, SettingActivity.class);
+                        startActivity(intent1);
+                        break;
+                    case R.id.nav_help_feedback:
+                        break;
+                    case R.id.nav_share:
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }, 200);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }

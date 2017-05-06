@@ -414,9 +414,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
             if (success) {
                 //登陆成功，跳转
-                Bundle bundle = new Bundle();
-                bundle.putBoolean("logined", true);
-                intent.putExtras(bundle);
+//                Bundle bundle = new Bundle();
+//                bundle.putBoolean("logined", true);
+//                intent.putExtras(bundle);
+                intent.putExtra("logged_in",true);
                 LoginActivity.this.setResult(1, intent);
                 LoginActivity.this.finish();
             } else {

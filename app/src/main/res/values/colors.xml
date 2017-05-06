@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#E53935</color>
-    <color name="colorPrimaryDark">#E53935</color>
-    <color name="colorAccent">#E53935</color>
+    <color name="colorPrimary">@color/colorRed</color>
+    <color name="colorPrimaryDark">@color/colorRed</color>
+    <color name="colorAccent">@color/colorRed</color>
 
-    <color name="colorStatusBar">#E53935</color>
-    <color name="colorNavigationBar">@android:color/black</color>
-    <color name="colorDrawerArrow">@android:color/white</color>
+    <color name="colorStatusBar">@color/colorRed</color>
+    <color name="colorNavigationBar">@color/colorBlank</color>
+    <color name="colorDrawerArrow">@color/colorWhite</color>
 
     <color name="colorBackground">#FAFAFA</color>
+    <color name="colorRipple">#9E9E9E</color>
+    
+    <color name="colorOrange">#FF7043</color>
+    <color name="colorRed">#E53935</color>
     <color name="colorWhite">#FFFFFF</color>
-
+    <color name="colorGray">#616161</color>
     <color name="colorBlank">#000000</color>
 </resources>

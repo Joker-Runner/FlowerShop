@@ -1,6 +1,7 @@
 package com.joker.flowershop.ui.fragment;
 
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -24,6 +25,7 @@ import com.google.gson.reflect.TypeToken;
 import com.joker.flowershop.R;
 import com.joker.flowershop.adapter.FlowerListAdapter;
 import com.joker.flowershop.bean.FlowerBean;
+import com.joker.flowershop.ui.FlowerDetailActivity;
 import com.joker.flowershop.utils.Constants;
 
 import java.io.IOException;
@@ -59,25 +61,17 @@ public class HomeFragment extends Fragment implements SwipeRefreshLayout.OnRefre
         View view = inflater.inflate(R.layout.fragment_home, container, false);
         swipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.swipe_refresh);
         flowerList = (ListView) view.findViewById(R.id.flower_list);
-        flowerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Toast.makeText(getContext(), "点击了Item " + position, Toast.LENGTH_SHORT).show();
-            }
-        });
         swipeRefreshLayout.setOnRefreshListener(this);
         swipeRefreshLayout.setColorSchemeColors(
                 ContextCompat.getColor(getContext(), android.R.color.holo_orange_light),
                 ContextCompat.getColor(getContext(), android.R.color.holo_blue_bright),
                 ContextCompat.getColor(getContext(), android.R.color.holo_green_light),
                 ContextCompat.getColor(getContext(), android.R.color.holo_red_light));
-        return view;
-    }
 
-    @Override
-    public void onResume() {
-        super.onResume();
+        getActivity().setTitle("网上花店");
+
         initListView();
+        return view;
     }
 
     @Override
@@ -101,12 +95,20 @@ public class HomeFragment extends Fragment implements SwipeRefreshLayout.OnRefre
             super.handleMessage(msg);
             switch (msg.arg1) {
                 case 1: // 获取到Flower的列表，进行UI加载
-                    ArrayList<FlowerBean> flowerBeanArrayList = (ArrayList<FlowerBean>) msg.obj;
+                    final ArrayList<FlowerBean> flowerBeanArrayList = (ArrayList<FlowerBean>) msg.obj;
                     if (flowerBeanArrayList.size()!=0){
                         FlowerListAdapter flowerListAdapter = new FlowerListAdapter
                                 (getContext(), flowerBeanArrayList, R.layout.flower_item);
                         flowerList.setAdapter(flowerListAdapter);
                         setListViewHeightBasedOnChildren(flowerList);
+                        flowerList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                            @Override
+                            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                Intent intent = new Intent(getContext(), FlowerDetailActivity.class);
+                                intent.putExtra("flower",flowerBeanArrayList.get(position));
+                                startActivity(intent);
+                            }
+                        });
                     }
                     break;
             }
