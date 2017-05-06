@@ -1,10 +1,12 @@
 package com.joker.flowershop.bean;
 
+import java.io.Serializable;
+
 /**
  * 花 Bean
  * Created by joker on 5/4 0004.
  */
-public class FlowerBean {
+public class FlowerBean implements Serializable{
     private int id;
     private String title;
     private String introduction;
