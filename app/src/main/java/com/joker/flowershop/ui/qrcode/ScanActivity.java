@@ -22,7 +22,6 @@ public class ScanActivity extends AppCompatActivity implements QRCodeView.Delega
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_scan);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        setTitle("扫一扫");
 
         qrCodeView = (QRCodeView) findViewById(R.id.zxing_view);
         qrCodeView.setDelegate(this);

@@ -81,6 +81,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     // 设置返回给MainActivity数据的Intent
     private Intent intent;
 
+    private SharedPreferences sharedPreferences;
+    private SharedPreferences.Editor editor;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,6 +92,10 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         getWindow().setBackgroundDrawableResource(R.drawable.main_activity_bg);
         setContentView(R.layout.activity_login);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        sharedPreferences = getSharedPreferences(Constants.INIT_SETTING_SHARED,MODE_APPEND);
+        editor = sharedPreferences.edit();
+
         // Set up the login form.
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
         populateAutoComplete();
@@ -414,11 +421,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
             if (success) {
                 //登陆成功，跳转
-//                Bundle bundle = new Bundle();
-//                bundle.putBoolean("logined", true);
-//                intent.putExtras(bundle);
-                intent.putExtra("logged_in",true);
-                LoginActivity.this.setResult(1, intent);
+                editor.putInt(Constants.LOGGED_USER_ID,1).commit();
+                intent.putExtra(Constants.LOGGED_IN,true);
+                LoginActivity.this.setResult(RESULT_OK, intent);
                 LoginActivity.this.finish();
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
