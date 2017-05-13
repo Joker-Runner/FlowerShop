@@ -8,19 +8,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
-import com.facebook.drawee.backends.pipeline.Fresco;
-import com.facebook.drawee.view.SimpleDraweeView;
 import com.joker.flowershop.R;
 import com.joker.flowershop.bean.FlowerBean;
 import com.joker.flowershop.ui.FlowerDetailActivity;
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
 /**
+ *
  * Created by joker on 5/5 0005.
  */
 
@@ -35,7 +36,7 @@ public class ShoppingCartAdapter extends BaseAdapter {
     private ToggleButton flower_checked;
     private TextView title;
     private TextView introduction;
-    private SimpleDraweeView image;
+    private ImageView image;
     private TextView price;
 
 
@@ -44,7 +45,6 @@ public class ShoppingCartAdapter extends BaseAdapter {
         this.resource = resource;
         this.flowerBeanList = flowerBeanList;
         this.layoutInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        Fresco.initialize(context);
     }
 
     @Override
@@ -74,13 +74,13 @@ public class ShoppingCartAdapter extends BaseAdapter {
         title = (TextView) convertView.findViewById(R.id.title);
         introduction = (TextView) convertView.findViewById(R.id.introduction);
         price = (TextView) convertView.findViewById(R.id.price);
-        image = (SimpleDraweeView) convertView.findViewById(R.id.image);
+        image = (ImageView) convertView.findViewById(R.id.image);
 
         flowerItem.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(context, FlowerDetailActivity.class);
-                intent.putExtra("flower",flowerBean);
+                intent.putExtra("flower", flowerBean);
                 context.startActivity(intent);
             }
         });
@@ -97,7 +97,7 @@ public class ShoppingCartAdapter extends BaseAdapter {
         price.setText("￥ " + flowerBean.getPrice());
         Log.d("TAG", flowerBean.getImageURL());
         Uri uri = Uri.parse(flowerBean.getImageURL());
-        image.setImageURI(uri);
+        Picasso.with(context).load(uri).into(image);
 
         return convertView;
     }
