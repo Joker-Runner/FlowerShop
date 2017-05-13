@@ -4,13 +4,11 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
-    <string name="action_settings">设置</string>
-
     <!-- Strings related to login -->
     <string name="prompt_sign_email">邮箱</string>
     <string name="prompt_login_password">密码（可选）</string>
     <string name="prompt_sign_up_password">密码（不得少于六位）</string>
-    <string name="action_sign_in">登录或注册</string>
+    <string name="action_sign_in">登录</string>
     <string name="action_sign_in_short">登录</string>
     <string name="action_sign_up_short">注册</string>
     <string name="error_field_required">必填</string>
@@ -18,8 +16,33 @@
     <string name="error_invalid_password">密码过短</string>
     <string name="error_incorrect_password">用户名或密码不正确</string>
     <string name="permission_rationale">"需要通讯录权限来自动补全用户名"</string>
-    <string name="title_activity_login">登录</string>
-    <string name="title_activity_sign_up">注册</string>
+
+    <string name="action_sign">登录/注册</string>
+
+    <!-- Title -->
+    <string name="login_title">登录</string>
+    <string name="sign_up_title">注册</string>
+
+    <string name="subject_title">分类</string>
+    <string name="star_title">我的收藏</string>
+    <string name="shopping_cart_title">购物车</string>
+    <string name="create_order_title">下单</string>
+    <string name="order_title">我的订单</string>
+    <string name="create_address_title">添加新的收货地址</string>
+
+    <string name="scan_title">扫一扫</string>
+    <string name="setting_title">设置</string>
+    <string name="help_feedback_title">帮助与反馈</string>
+    <string name="share_title">分享</string>
+
+    <!-- 搜索时的提示数据 -->
+    <string-array name="query_suggestions">
+        <item>玫瑰</item>
+        <item>百合</item>
+        <item>满天星</item>
+        <item>康乃馨</item>
+        <item>蝴蝶兰</item>
+    </string-array>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

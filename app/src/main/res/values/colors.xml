@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="colorPrimary">@color/colorRed</color>
-    <color name="colorPrimaryDark">@color/colorRed</color>
+    <color name="colorPrimaryDark">@color/colorDarkRed</color>
     <color name="colorAccent">@color/colorRed</color>
 
     <color name="colorStatusBar">@color/colorRed</color>
@@ -10,9 +10,13 @@
 
     <color name="colorBackground">#FAFAFA</color>
     <color name="colorRipple">#9E9E9E</color>
+
+    <color name="colorItemBackground">#E0E0E0</color>
+    <color name="colorHintText">#E0E0E0</color>
     
     <color name="colorOrange">#FF7043</color>
     <color name="colorRed">#E53935</color>
+    <color name="colorDarkRed">#C62828</color>
     <color name="colorWhite">#FFFFFF</color>
     <color name="colorGray">#616161</color>
     <color name="colorBlank">#000000</color>

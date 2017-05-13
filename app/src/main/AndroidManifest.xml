@@ -19,6 +19,7 @@
         <activity
             android:name=".ui.MainActivity"
             android:label="@string/app_name"
+            android:launchMode="singleTask"
             android:theme="@style/AppTheme.NoActionBar.Launcher">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -28,14 +29,37 @@
         </activity>
         <activity
             android:name=".ui.LoginActivity"
-            android:label="@string/title_activity_login" />
+            android:label="@string/login_title" />
         <activity
             android:name=".ui.SignUpActivity"
-            android:label="@string/title_activity_sign_up" />
-        <activity android:name=".ui.qrcode.ScanActivity" />
+            android:label="@string/sign_up_title" />
+        <activity
+            android:name=".ui.qrcode.ScanActivity"
+            android:label="@string/scan_title" />
         <activity android:name=".ui.qrcode.ScanResultActivity" />
         <activity android:name=".ui.FlowerDetailActivity" />
-        <activity android:name=".ui.SettingActivity"></activity>
+        <activity
+            android:name=".ui.SettingActivity"
+            android:label="@string/setting_title" />
+        <activity
+            android:name=".ui.order.CreateOrderActivity"
+            android:label="@string/create_order_title" />
+        <activity
+            android:name=".ui.subject.SubjectActivity"
+            android:label="@string/subject_title"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".ui.ShoppingCartActivity"
+            android:label="@string/shopping_cart_title" />
+        <activity
+            android:name=".ui.order.OrderActivity"
+            android:label="@string/order_title" />
+        <activity android:name=".ui.CityPickerPopActivity" />
+        <activity
+            android:name=".ui.order.OrderStatusPopActivity"
+            android:theme="@style/MyPopActivityTheme" />
+        <activity android:name=".ui.CreateNewAddressActivity"
+            android:label="@string/create_address_title"/>
     </application>
 
 </manifest>

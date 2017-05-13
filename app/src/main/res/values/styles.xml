@@ -1,22 +1,16 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-
-        <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>
-
-        <item name="android:statusBarColor" tools:targetApi="21">@color/colorStatusBar</item>
-        <item name="android:navigationBarColor" tools:targetApi="21">@color/colorNavigationBar</item>
-        <item name="android:windowDrawsSystemBarBackgrounds" tools:targetApi="21">true</item>
     </style>
 
-    <style name="DrawerArrowStyle" parent="Widget.AppCompat.DrawerArrowToggle">
-        <item name="spinBars">true</item>
-        <item name="color">@color/colorDrawerArrow</item>
+    <style name="MainActivityTheme.NoActionBar" parent="AppTheme">
+        <item name="android:windowTranslucentStatus" tools:targetApi="21">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
@@ -32,5 +26,50 @@
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="MaterialSearchViewStyle">
+        <!-- Background for the search bar-->
+        <item name="searchBackground">@color/colorPrimary</item>
+
+        <!-- Change voice icon-->
+        <item name="searchVoiceIcon">@drawable/ic_keyboard_voice_white_24dp</item>
+
+        <!-- Change clear text icon-->
+        <item name="searchCloseIcon">@drawable/ic_close_white_24dp</item>
+
+        <!-- Change up icon-->
+        <item name="searchBackIcon">@drawable/ic_arrow_back_white_24dp</item>
+
+        <!-- Change icon for the suggestions-->
+        <item name="searchSuggestionIcon">@drawable/ic_suggestion</item>
+
+        <!-- Change background for the suggestions list view-->
+        <item name="searchSuggestionBackground">@color/colorWhite</item>
+
+        <!-- Change text color for edit text. This will also be the color of the cursor-->
+        <item name="android:textColor">@color/colorWhite</item>
+
+        <!-- Change hint text color for edit text-->
+        <item name="android:textColorHint">@color/colorHintText</item>
+
+        <!-- Hint for edit text-->
+        <item name="android:hint">@string/search_hint</item>
+    </style>
+
+    <style name="MyPopActivityTheme" parent="AppTheme">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="android:windowTranslucentStatus" tools:targetApi="kitkat">true</item>
+        <item name="android:windowAnimationStyle">@style/Anim_scale</item>
+    </style>
+
+    <style name="Anim_scale" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/pop_alpha_in</item>
+        <item name="android:activityOpenExitAnimation">@anim/pop_alpha_out</item>
+        <item name="android:activityCloseEnterAnimation">@anim/pop_alpha_in</item>
+        <item name="android:activityCloseExitAnimation">@anim/pop_alpha_out</item>
+    </style>
 
 </resources>
