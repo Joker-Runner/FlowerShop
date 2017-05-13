@@ -1,6 +1,7 @@
 package com.joker.flowershop.ui;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -15,6 +16,7 @@ import com.joker.flowershop.utils.Constants;
 public class SettingActivity extends AppCompatActivity implements View.OnClickListener {
 
     private Button sign_out;
+    private Button add_address;
 
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
@@ -26,7 +28,9 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         sign_out = (Button) findViewById(R.id.sign_out);
+        add_address = (Button) findViewById(R.id.add_address);
         sign_out.setOnClickListener(this);
+        add_address.setOnClickListener(this);
 
         sharedPreferences = getSharedPreferences(Constants.INIT_SETTING_SHARED, MODE_APPEND);
         editor = sharedPreferences.edit();
@@ -66,6 +70,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         editor.remove(Constants.LOGGED_IN).commit();
+                        editor.remove(Constants.LOGGED_USER_ID).commit();
                         sign_out.setVisibility(View.GONE);
                     }
                 });
@@ -77,6 +82,10 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                 });
                 builder.create();
                 builder.show();
+                break;
+            case R.id.add_address:
+                Intent intent = new Intent(this,CreateNewAddressActivity.class);
+                startActivity(intent);
                 break;
         }
     }

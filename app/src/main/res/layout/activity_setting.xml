@@ -6,15 +6,29 @@
     android:paddingTop="@dimen/title_margin"
     tools:context="com.joker.flowershop.ui.SettingActivity">
 
-    <Button
-        android:id="@+id/sign_out"
-        style="@style/Base.Widget.AppCompat.Button.Borderless"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:layout_gravity="bottom"
-        android:layout_marginBottom="@dimen/title_margin"
-        android:background="@drawable/ripple_bg"
-        android:textColor="@color/colorAccent"
-        android:text="退出账号"/>
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
+        <Button
+            android:id="@+id/add_address"
+            style="@style/Base.Widget.AppCompat.Button.Borderless"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@drawable/ripple_bg"
+            android:layout_marginBottom="@dimen/title_margin"
+            android:text="添加收货人" />
+
+        <Button
+            android:id="@+id/sign_out"
+            style="@style/Base.Widget.AppCompat.Button.Borderless"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:layout_marginBottom="@dimen/title_margin"
+            android:background="@drawable/ripple_bg"
+            android:text="退出账号"
+            android:textColor="@color/colorAccent" />
+
+    </LinearLayout>
 </ScrollView>
