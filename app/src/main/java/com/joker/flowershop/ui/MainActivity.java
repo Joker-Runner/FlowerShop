@@ -59,11 +59,9 @@ public class MainActivity extends AppCompatActivity
 
     private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView flowerList;
-
-    private DrawerLayout drawer;
-
     private MaterialSearchView searchView;
 
+    private DrawerLayout drawer;
     private ImageView nav_icon; // 头像
     private TextView userName; //用户名
     private TextView city;
@@ -71,10 +69,10 @@ public class MainActivity extends AppCompatActivity
 
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
-
+    private UserFlowerListTask userFlowerListTask = null;
     private SearchFlowerTask searchFlowerTask = null;
 
-    private static final int REQUEST_LOGIN = 347;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,9 +114,6 @@ public class MainActivity extends AppCompatActivity
 
         sharedPreferences = getSharedPreferences(Constants.INIT_SETTING_SHARED, MODE_APPEND);
         editor = sharedPreferences.edit();
-
-//        HomeFragment homeFragment = new HomeFragment();
-//        setMainContent(homeFragment);
     }
 
     @Override
@@ -141,7 +136,7 @@ public class MainActivity extends AppCompatActivity
     private void initRecyclerList() {
         setTitle(getString(R.string.app_name));
         swipeRefreshLayout.setRefreshing(true);
-        UserFlowerListTask userFlowerListTask = new UserFlowerListTask();
+        userFlowerListTask = new UserFlowerListTask();
         userFlowerListTask.execute((Void) null);
         swipeRefreshLayout.setRefreshing(false);
     }
@@ -183,6 +178,13 @@ public class MainActivity extends AppCompatActivity
         searchView.setVoiceSearch(true);
         searchView.setCursorDrawable(R.drawable.color_cursor_white);
         searchView.setSuggestions(getResources().getStringArray(R.array.query_suggestions));
+        searchView.setOnVoiceClickListener(new MaterialSearchView.OnVoiceClickListener() {
+            @Override
+            public boolean onVoiceClick() {
+                Toast.makeText(MainActivity.this,"点击了Voice，MainActivity响应",Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        });
         searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
@@ -213,20 +215,10 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-//    /**
-//     * 设置 HomeActivity 的内容
-//     *
-//     * @param fragment 要呈现的 Fragment
-//     */
-//    public void setMainContent(Fragment fragment) {
-//        getSupportFragmentManager().beginTransaction().
-//                replace(R.id.main_container, fragment).commit();
-//    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
-            case REQUEST_LOGIN:
+            case Constants.REQUEST_CODE_LOGIN:
                 if (resultCode == RESULT_OK && data.getBooleanExtra(Constants.LOGGED_IN, false)) {
                     nav_icon.setImageResource(R.drawable.icon_default);
                     userName.setText("Joker_Runner");
@@ -342,7 +334,7 @@ public class MainActivity extends AppCompatActivity
                         @Override
                         public void run() {
                             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-                            startActivityForResult(intent, REQUEST_LOGIN);
+                            startActivityForResult(intent, Constants.REQUEST_CODE_LOGIN);
                         }
                     }, 200);
                 }

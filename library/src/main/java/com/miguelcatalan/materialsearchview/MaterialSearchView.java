@@ -64,6 +64,7 @@ public class MaterialSearchView extends FrameLayout implements Filter.FilterList
     private CharSequence mOldQueryText;
     private CharSequence mUserQuery;
 
+    private OnVoiceClickListener mOnVoiceClickListener;
     private OnQueryTextListener mOnQueryChangeListener;
     private SearchViewListener mSearchViewListener;
 
@@ -236,14 +237,18 @@ public class MaterialSearchView extends FrameLayout implements Filter.FilterList
     };
 
     private void onVoiceClicked() {
-        Toast.makeText(mContext,"Voice",Toast.LENGTH_SHORT).show();
-        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        //intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak an item name or number");    // user hint
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_WEB_SEARCH);    // setting recognition model, optimized for short phrases – search queries
-        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);    // quantity of results we want to receive
-        if (mContext instanceof Activity) {
-            ((Activity) mContext).startActivityForResult(intent, REQUEST_VOICE);
+        if (mOnVoiceClickListener!=null){
+            mOnVoiceClickListener.onVoiceClick();
         }
+
+//        Toast.makeText(mContext,"Voice",Toast.LENGTH_SHORT).show();
+//        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+//        //intent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak an item name or number");    // user hint
+//        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_WEB_SEARCH);    // setting recognition model, optimized for short phrases – search queries
+//        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);    // quantity of results we want to receive
+//        if (mContext instanceof Activity) {
+//            ((Activity) mContext).startActivityForResult(intent, REQUEST_VOICE);
+//        }
     }
 
     private void onTextChanged(CharSequence newText) {
@@ -589,6 +594,15 @@ public class MaterialSearchView extends FrameLayout implements Filter.FilterList
     }
 
     /**
+     * 设置点击语音按钮的监听事件
+     *
+     * @param listener
+     */
+    public void setOnVoiceClickListener(OnVoiceClickListener listener){
+        mOnVoiceClickListener = listener;
+    }
+
+    /**
      * Set this listener to listen to Query Change events.
      *
      * @param listener
@@ -702,6 +716,14 @@ public class MaterialSearchView extends FrameLayout implements Filter.FilterList
                         return new SavedState[size];
                     }
                 };
+    }
+
+    public interface OnVoiceClickListener {
+        /**
+         * 当点击Voice按钮时的回调接口，
+         * @return
+         */
+        boolean onVoiceClick();
     }
 
     public interface OnQueryTextListener {
