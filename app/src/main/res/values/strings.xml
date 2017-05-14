@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">网上花店</string>
+    <!-- 科大讯飞语音识别APP_ID -->
+    <string name="app_id">5917cc07</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>

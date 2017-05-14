@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.speech.RecognizerIntent;
@@ -31,6 +32,15 @@ import android.widget.Toast;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import com.iflytek.cloud.ErrorCode;
+import com.iflytek.cloud.InitListener;
+import com.iflytek.cloud.RecognizerResult;
+import com.iflytek.cloud.SpeechConstant;
+import com.iflytek.cloud.SpeechError;
+import com.iflytek.cloud.SpeechRecognizer;
+import com.iflytek.cloud.ui.RecognizerDialog;
+import com.iflytek.cloud.ui.RecognizerDialogListener;
+import com.iflytek.sunflower.FlowerCollector;
 import com.joker.flowershop.R;
 import com.joker.flowershop.adapter.recycler.FlowerAdapter;
 import com.joker.flowershop.adapter.recycler.ResourceItemDivider;
@@ -39,11 +49,17 @@ import com.joker.flowershop.ui.order.OrderActivity;
 import com.joker.flowershop.ui.qrcode.ScanActivity;
 import com.joker.flowershop.ui.subject.SubjectActivity;
 import com.joker.flowershop.utils.Constants;
+import com.joker.flowershop.utils.msc.JsonParser;
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
@@ -72,6 +88,24 @@ public class MainActivity extends AppCompatActivity
     private UserFlowerListTask userFlowerListTask = null;
     private SearchFlowerTask searchFlowerTask = null;
 
+    /**
+     * Handler标签
+     */
+    private final static int HANDLER_SHOW_FLOWER_LIST_TAG = 1;
+    private final static int HANDLER_SPEECH_RESULT_TAG = 2;
+
+
+    /**
+     * 讯飞语音识别MSC
+     */
+    // 语音听写对象
+    private SpeechRecognizer mIat;
+    // 语音听写UI
+    private RecognizerDialog mIatDialog;
+    // 用HashMap存储听写结果
+    private HashMap<String, String> mIatResults = new LinkedHashMap<String, String>();
+    // 引擎类型
+    private String mEngineType = SpeechConstant.TYPE_CLOUD;
 
 
     @Override
@@ -93,6 +127,7 @@ public class MainActivity extends AppCompatActivity
                 ContextCompat.getColor(this, android.R.color.holo_red_light));
 
         setSearchView();
+        initMSC();
         initRecyclerList();
 
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -141,7 +176,7 @@ public class MainActivity extends AppCompatActivity
         swipeRefreshLayout.setRefreshing(false);
     }
 
-    private void setFlowerList(final ArrayList<FlowerBean> flowerBeanArrayList){
+    private void setFlowerList(final ArrayList<FlowerBean> flowerBeanArrayList) {
         flowerList.setLayoutManager(new LinearLayoutManager(MainActivity.this));
         FlowerAdapter flowerAdapter = new FlowerAdapter(MainActivity.this, flowerBeanArrayList);
         flowerAdapter.setOnItemClickListener(new FlowerAdapter.OnItemClickListener() {
@@ -154,24 +189,29 @@ public class MainActivity extends AppCompatActivity
             }
         });
         flowerList.setAdapter(flowerAdapter);
-        flowerList.addItemDecoration(new ResourceItemDivider(this,R.drawable.divider));
+        flowerList.addItemDecoration(new ResourceItemDivider(this, R.drawable.divider));
     }
 
-    Handler handler = new Handler() {
+    private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             switch (msg.arg1) {
-                case 1: // 获取到Flower的列表，进行UI加载
+                case HANDLER_SHOW_FLOWER_LIST_TAG: // 获取到Flower的列表，进行UI加载
                     final ArrayList<FlowerBean> flowerBeanArrayList = (ArrayList<FlowerBean>) msg.obj;
                     if (flowerBeanArrayList.size() != 0) {
                         setFlowerList(flowerBeanArrayList);
                     }
                     break;
+                case HANDLER_SPEECH_RESULT_TAG: // 语音识别成功
+                    String result = (String) msg.obj;
+                    if (!TextUtils.isEmpty(result)) {
+                        searchView.setQuery(result, false);
+                    }
+                    break;
             }
         }
     };
-
 
     private void setSearchView() {
         searchView = (MaterialSearchView) findViewById(R.id.search_view);
@@ -181,17 +221,31 @@ public class MainActivity extends AppCompatActivity
         searchView.setOnVoiceClickListener(new MaterialSearchView.OnVoiceClickListener() {
             @Override
             public boolean onVoiceClick() {
-                Toast.makeText(MainActivity.this,"点击了Voice，MainActivity响应",Toast.LENGTH_SHORT).show();
+                if (null == mIat) {
+                    // 创建单例失败，与 21001 错误为同样原因，参考 http://bbs.xfyun.cn/forum.php?mod=viewthread&tid=9688
+                    Toast.makeText(MainActivity.this,"创建对象失败，请确认 libmsc.so 放置正确，且有调用 createUtility 进行初始化",Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+
+                // 移动数据分析，收集开始听写事件
+                FlowerCollector.onEvent(MainActivity.this, "iat_recognize");
+
+//                mResultText.setText(null);// 清空显示内容
+                mIatResults.clear();
+                // 设置参数
+                setParameter();
+                // 显示听写对话框
+                mIatDialog.setListener(mRecognizerDialogListener);
+                mIatDialog.show();
                 return false;
             }
         });
         searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                Toast.makeText(MainActivity.this, query, Toast.LENGTH_SHORT).show();
                 searchFlowerTask = new SearchFlowerTask(query);
                 searchFlowerTask.execute((Void) null);
-                MainActivity.this.setTitle(query+" ...");
+                MainActivity.this.setTitle(query + " ...");
                 return false;
             }
 
@@ -289,7 +343,7 @@ public class MainActivity extends AppCompatActivity
                         break;
                     case R.id.nav_shopping_car:
                         if (sharedPreferences.getBoolean(Constants.LOGGED_IN, false)) {
-                            Intent intentShoppingCart = new Intent(MainActivity.this,ShoppingCartActivity.class);
+                            Intent intentShoppingCart = new Intent(MainActivity.this, ShoppingCartActivity.class);
                             startActivity(intentShoppingCart);
                         } else {
                             Toast.makeText(MainActivity.this, "请先登录", Toast.LENGTH_LONG).show();
@@ -298,7 +352,7 @@ public class MainActivity extends AppCompatActivity
                         }
                         break;
                     case R.id.nav_order:
-                        Intent intentOrder = new Intent(MainActivity.this,OrderActivity.class);
+                        Intent intentOrder = new Intent(MainActivity.this, OrderActivity.class);
                         startActivity(intentOrder);
                         break;
                     case R.id.nav_scan:
@@ -324,7 +378,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()){
+        switch (v.getId()) {
             case R.id.nav_icon:
                 if (sharedPreferences.getBoolean(Constants.LOGGED_IN, false)) {
                     Toast.makeText(MainActivity.this, "已经登录", Toast.LENGTH_LONG).show();
@@ -340,11 +394,113 @@ public class MainActivity extends AppCompatActivity
                 }
                 break;
             case R.id.select_city:
-                Toast.makeText(MainActivity.this,"切换城市",Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "切换城市", Toast.LENGTH_SHORT).show();
                 break;
             default:
                 break;
         }
+    }
+
+
+    /**
+     * 讯飞语音识别
+     */
+    public void initMSC() {
+        // 初始化识别无UI识别对象
+        // 使用SpeechRecognizer对象，可根据回调消息自定义界面；
+        mIat = com.iflytek.cloud.SpeechRecognizer.createRecognizer(this, mInitListener);
+
+        // 初始化听写Dialog，如果只使用有UI听写功能，无需创建SpeechRecognizer
+        // 使用UI听写功能，请根据sdk文件目录下的notice.txt,放置布局文件和图片资源
+        mIatDialog = new RecognizerDialog(this, mInitListener);
+    }
+
+    /**
+     * 初始化监听器
+     */
+    private InitListener mInitListener = new InitListener() {
+
+        @Override
+        public void onInit(int code) {
+            if (code != ErrorCode.SUCCESS) {
+                Toast.makeText(MainActivity.this,"初始化失败，错误码：" + code,Toast.LENGTH_SHORT).show();
+            }
+        }
+    };
+
+    private void printResult(RecognizerResult results) {
+        String text = JsonParser.parseIatResult(results.getResultString());
+
+        String sn = null;
+        // 读取json结果中的sn字段
+        try {
+            JSONObject resultJson = new JSONObject(results.getResultString());
+            sn = resultJson.optString("sn");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        mIatResults.put(sn, text);
+
+        StringBuffer resultBuffer = new StringBuffer();
+        for (String key : mIatResults.keySet()) {
+            resultBuffer.append(mIatResults.get(key));
+        }
+        String result = resultBuffer.toString();
+
+        Message message = new Message();
+        message.arg1 = HANDLER_SPEECH_RESULT_TAG;
+        message.obj = result;
+        handler.sendMessage(message);
+    }
+
+    /**
+     * 听写UI监听器
+     */
+    private RecognizerDialogListener mRecognizerDialogListener = new RecognizerDialogListener() {
+        public void onResult(RecognizerResult results, boolean isLast) {
+            printResult(results);
+        }
+
+        /**
+         * 识别回调错误.
+         */
+        public void onError(SpeechError error) {
+            Toast.makeText(MainActivity.this,error.getPlainDescription(true),Toast.LENGTH_SHORT).show();
+        }
+
+    };
+
+    /**
+     * 参数设置
+     */
+    public void setParameter() {
+        // 清空参数
+        mIat.setParameter(SpeechConstant.PARAMS, null);
+
+        // 设置听写引擎
+        mIat.setParameter(SpeechConstant.ENGINE_TYPE, mEngineType);
+        // 设置返回结果格式
+        mIat.setParameter(SpeechConstant.RESULT_TYPE, "json");
+
+        // 设置语言
+        mIat.setParameter(SpeechConstant.LANGUAGE, "zh_cn");
+        // 设置语言区域
+        mIat.setParameter(SpeechConstant.ACCENT, "mandarin");
+
+        // 设置语音前端点:静音超时时间，即用户多长时间不说话则当做超时处理
+        mIat.setParameter(SpeechConstant.VAD_BOS, "4000");
+
+        // 设置语音后端点:后端点静音检测时间，即用户停止说话多长时间内即认为不再输入， 自动停止录音
+        mIat.setParameter(SpeechConstant.VAD_EOS, "1000");
+
+        // 设置标点符号,设置为"0"返回结果无标点,设置为"1"返回结果有标点
+        mIat.setParameter(SpeechConstant.ASR_PTT, "0");
+
+        // 设置音频保存路径，保存音频格式支持pcm、wav，设置路径为sd卡请注意WRITE_EXTERNAL_STORAGE权限
+        // 注：AUDIO_FORMAT参数语记需要更新版本才能生效
+        mIat.setParameter(SpeechConstant.AUDIO_FORMAT, "wav");
+        mIat.setParameter(SpeechConstant.ASR_AUDIO_PATH, Environment.getExternalStorageDirectory() + "/msc/iat.wav");
     }
 
     /**
@@ -382,10 +538,10 @@ public class MainActivity extends AppCompatActivity
         protected void onPostExecute(ArrayList<FlowerBean> flowerBeanArrayList) {
             searchFlowerTask = null;
             if (flowerBeanArrayList != null) {
-                    Message message = new Message();
-                    message.arg1 = 1;
-                    message.obj = flowerBeanArrayList;
-                    handler.handleMessage(message);
+                Message message = new Message();
+                message.arg1 = HANDLER_SHOW_FLOWER_LIST_TAG;
+                message.obj = flowerBeanArrayList;
+                handler.handleMessage(message);
             }
         }
 
@@ -437,7 +593,7 @@ public class MainActivity extends AppCompatActivity
         protected void onPostExecute(ArrayList<FlowerBean> flowerBeanArrayList) {
             if (flowerBeanArrayList != null) {
                 Message message = new Message();
-                message.arg1 = 1;
+                message.arg1 = HANDLER_SHOW_FLOWER_LIST_TAG;
                 message.obj = flowerBeanArrayList;
                 handler.handleMessage(message);
             }

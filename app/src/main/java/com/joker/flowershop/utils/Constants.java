@@ -19,6 +19,12 @@ public class Constants {
     }
 
     /**
+     * 请求码
+     */
+    public static final int REQUEST_CODE_LOGIN = 347;
+
+
+    /**
      * 初始化设置 SharedPreferences
      */
     public static final String INIT_SETTING_SHARED = "init_sharedPreferences";
