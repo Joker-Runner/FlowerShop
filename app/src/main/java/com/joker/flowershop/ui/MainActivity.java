@@ -199,9 +199,7 @@ public class MainActivity extends AppCompatActivity
             switch (msg.arg1) {
                 case HANDLER_SHOW_FLOWER_LIST_TAG: // 获取到Flower的列表，进行UI加载
                     final ArrayList<FlowerBean> flowerBeanArrayList = (ArrayList<FlowerBean>) msg.obj;
-                    if (flowerBeanArrayList.size() != 0) {
                         setFlowerList(flowerBeanArrayList);
-                    }
                     break;
                 case HANDLER_SPEECH_RESULT_TAG: // 语音识别成功
                     String result = (String) msg.obj;
