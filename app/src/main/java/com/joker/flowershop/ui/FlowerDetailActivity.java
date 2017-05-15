@@ -11,13 +11,13 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.joker.flowershop.R;
 import com.joker.flowershop.bean.FlowerBean;
 import com.joker.flowershop.ui.order.CreateOrderActivity;
 import com.joker.flowershop.utils.Constants;
-import com.squareup.picasso.Picasso;
+import com.joker.flowershop.utils.MyCustomToast;
 
 import java.io.IOException;
 
@@ -39,6 +39,7 @@ public class FlowerDetailActivity extends AppCompatActivity implements View.OnCl
     Button order;
 
     AddShoppingCartTask addShoppingCartTask;
+    AddStarTask addStarTask;
 
     SharedPreferences sharedPreferences;
 
@@ -65,7 +66,7 @@ public class FlowerDetailActivity extends AppCompatActivity implements View.OnCl
         flowerBean = (FlowerBean) intent.getSerializableExtra("flower");
         setTitle(flowerBean.getTitle());
         Uri uri = Uri.parse(flowerBean.getImageURL());
-        Picasso.with(this).load(uri).resize(2000, 2000).centerCrop().into(image);
+        Glide.with(this).load(uri).centerCrop().into(image);
         title.setText(flowerBean.getTitle());
         price.setText("￥ " + flowerBean.getPrice());
         introduction.setText(flowerBean.getIntroduction());
@@ -89,14 +90,17 @@ public class FlowerDetailActivity extends AppCompatActivity implements View.OnCl
         if (sharedPreferences.getBoolean(Constants.LOGGED_IN, false)) {
             switch (v.getId()) {
                 case R.id.like:
+                    addStarTask = new AddStarTask(flowerBean.getId(),
+                            sharedPreferences.getInt(Constants.LOGGED_USER_ID, 0));
+                    addStarTask.execute((Void[]) null);
                     break;
                 case R.id.add_cart:
                     addShoppingCartTask = new AddShoppingCartTask(flowerBean.getId(), 1);
                     addShoppingCartTask.execute((Void) null);
                     break;
                 case R.id.order:
-                    Intent intent = new Intent(this,CreateOrderActivity.class);
-                    intent.putExtra("flower",flowerBean);
+                    Intent intent = new Intent(this, CreateOrderActivity.class);
+                    intent.putExtra("flower", flowerBean);
                     startActivity(intent);
                     break;
                 default:
@@ -108,6 +112,9 @@ public class FlowerDetailActivity extends AppCompatActivity implements View.OnCl
         }
     }
 
+    /**
+     * 添加购物车异步任务
+     */
     private class AddShoppingCartTask extends AsyncTask<Void, Void, Boolean> {
 
         int flowerId;
@@ -140,7 +147,52 @@ public class FlowerDetailActivity extends AppCompatActivity implements View.OnCl
         protected void onPostExecute(Boolean success) {
             addShoppingCartTask = null;
             if (success) {
-                Toast.makeText(FlowerDetailActivity.this, "成功加入购物车", Toast.LENGTH_SHORT).show();
+                MyCustomToast.show(FlowerDetailActivity.this, "成功加入购物车", MyCustomToast.LENGTH_SHORT);
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+            addShoppingCartTask = null;
+        }
+    }
+
+    /**
+     * 添加收藏夹异步任务
+     */
+    private class AddStarTask extends AsyncTask<Void, Void, Boolean> {
+
+        int flowerId;
+        int userId;
+
+        AddStarTask(int flowerId, int userId) {
+            this.flowerId = flowerId;
+            this.userId = userId;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            String responseData = null;
+            try {
+                RequestBody requestBody = new FormBody.Builder()
+                        .add("flower_id", flowerId + "").add("user_id", userId + "").build();
+                Request request = new Request.Builder()
+                        .url(Constants.getURL() + "/add_star").post(requestBody).build();
+                Response response = new OkHttpClient().newCall(request).execute();
+                responseData = response.body().string();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return responseData != null && responseData.equals("true");
+        }
+
+        @Override
+        protected void onPostExecute(Boolean success) {
+            addShoppingCartTask = null;
+            if (success) {
+                MyCustomToast.show(FlowerDetailActivity.this, "成功加入收藏夹", MyCustomToast.LENGTH_SHORT);
             }
         }
 
