@@ -1,5 +1,6 @@
 package com.joker.flowershop.ui;
 
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -7,24 +8,30 @@ import android.os.Message;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 
+import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.joker.flowershop.R;
-import com.joker.flowershop.adapter.ShoppingCartAdapter;
+import com.joker.flowershop.adapter.recycler.ResourceItemDivider;
+import com.joker.flowershop.adapter.recycler.ShoppingCartAdapter;
 import com.joker.flowershop.bean.FlowerBean;
 import com.joker.flowershop.utils.Constants;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
@@ -36,9 +43,18 @@ public class ShoppingCartActivity extends AppCompatActivity implements SwipeRefr
 
 
     private SwipeRefreshLayout swipeRefreshLayout;
-    private ListView flowerList;
-
+    private RecyclerView flowerList;
+    private ShoppingCartAdapter shoppingCartAdapter;
     private UserFlowerListTask userFlowerListTask;
+
+    private TextView totalPrice;
+    private HashSet<FlowerBean> checkedFlowerBeanArrayList;
+
+    private SharedPreferences sharedPreferences;
+
+    private final static int HANDLER_SHOW_FLOWER_LIST_TAG = 1;
+    public final static int HANDLER_CHECKED_FLOWER_TAG = 2;
+    public final static int HANDLER_UNCHECKED_FLOWER_TAG = 3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +65,8 @@ public class ShoppingCartActivity extends AppCompatActivity implements SwipeRefr
         }
 
         swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh);
-        flowerList = (ListView) findViewById(R.id.flower_list);
+        flowerList = (RecyclerView) findViewById(R.id.flower_list);
+        totalPrice = (TextView) findViewById(R.id.total_price);
         swipeRefreshLayout.setOnRefreshListener(this);
         swipeRefreshLayout.setColorSchemeColors(
                 ContextCompat.getColor(this, android.R.color.holo_orange_light),
@@ -57,37 +74,68 @@ public class ShoppingCartActivity extends AppCompatActivity implements SwipeRefr
                 ContextCompat.getColor(this, android.R.color.holo_green_light),
                 ContextCompat.getColor(this, android.R.color.holo_red_light));
 
-        initListView();
+        sharedPreferences = getSharedPreferences(Constants.INIT_SETTING_SHARED, MODE_APPEND);
+        checkedFlowerBeanArrayList = new HashSet<>();
+        initRecyclerView();
+        setRecyclerView();
+
     }
 
     @Override
     public void onRefresh() {
-        initListView();
+        setRecyclerView();
+    }
+
+    public void initRecyclerView() {
+        flowerList.setLayoutManager(new LinearLayoutManager(ShoppingCartActivity.this));
+        flowerList.addItemDecoration(new ResourceItemDivider(ShoppingCartActivity.this, R.drawable.divider));
     }
 
     /**
      * 初始化刷新列表
      */
-    public void initListView() {
+    public void setRecyclerView() {
         swipeRefreshLayout.setRefreshing(true);
         userFlowerListTask = new UserFlowerListTask();
         userFlowerListTask.execute((Void) null);
         swipeRefreshLayout.setRefreshing(false);
     }
 
-    Handler handler = new Handler() {
+    public Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             switch (msg.arg1) {
-                case 1: // 获取到Flower的列表，进行UI加载
+                case HANDLER_SHOW_FLOWER_LIST_TAG: // 获取到Flower的列表，进行UI加载
                     final ArrayList<FlowerBean> flowerBeanArrayList = (ArrayList<FlowerBean>) msg.obj;
                     if (flowerBeanArrayList.size() != 0) {
-                        ShoppingCartAdapter shoppingCartAdapter = new ShoppingCartAdapter
-                                (ShoppingCartActivity.this, flowerBeanArrayList, R.layout.shopping_cart_flower_item);
+                        shoppingCartAdapter = new ShoppingCartAdapter
+                                (R.layout.shopping_cart_flower_item, flowerBeanArrayList);
+                        shoppingCartAdapter.openLoadAnimation(BaseQuickAdapter.ALPHAIN);
                         flowerList.setAdapter(shoppingCartAdapter);
-                        setListViewHeightBasedOnChildren(flowerList);
+                        checkedFlowerBeanArrayList.clear();
+                        totalPrice.setText("0");
                     }
+                    break;
+                case HANDLER_CHECKED_FLOWER_TAG: // 选中购物车商品
+                    FlowerBean flowerBean = (FlowerBean) msg.obj;
+                    checkedFlowerBeanArrayList.add(flowerBean);
+                    double total = 0;
+                    for (FlowerBean flower :
+                            checkedFlowerBeanArrayList) {
+                        total += flower.getPrice();
+                    }
+                    totalPrice.setText(String.valueOf(total));
+                    break;
+                case HANDLER_UNCHECKED_FLOWER_TAG: // 取消选中购物车商品
+                    FlowerBean flowerBean1 = (FlowerBean) msg.obj;
+                    checkedFlowerBeanArrayList.remove(flowerBean1);
+                    double total1 = 0;
+                    for (FlowerBean flower :
+                            checkedFlowerBeanArrayList) {
+                        total1 += flower.getPrice();
+                    }
+                    totalPrice.setText(String.valueOf(total1));
                     break;
             }
         }
@@ -106,35 +154,6 @@ public class ShoppingCartActivity extends AppCompatActivity implements SwipeRefr
     }
 
     /**
-     * 保持 ListView 在 ScrollView 中正常显示
-     *
-     * @param listView 想要现实的ListView
-     */
-    public void setListViewHeightBasedOnChildren(ListView listView) {
-        // 获取ListView对应的Adapter
-        ListAdapter listAdapter = listView.getAdapter();
-        if (listAdapter == null) {
-            return;
-        }
-
-        int totalHeight = 0;
-        for (int i = 0, len = listAdapter.getCount(); i < len; i++) {
-            // listAdapter.getCount()返回数据项的数目
-            View listItem = listAdapter.getView(i, null, listView);
-            // 计算子项View 的宽高
-            listItem.measure(0, 0);
-            // 统计所有子项的总高度
-            totalHeight += listItem.getMeasuredHeight();
-        }
-
-        ViewGroup.LayoutParams params = listView.getLayoutParams();
-        params.height = totalHeight + (listView.getDividerHeight() * (listAdapter.getCount() - 1));
-        // listView.getDividerHeight()获取子项间分隔符占用的高度
-        // params.height最后得到整个ListView完整显示需要的高度
-        listView.setLayoutParams(params);
-    }
-
-    /**
      * 用于加载列表的异步任务
      */
     private class UserFlowerListTask extends AsyncTask<Void, Void, ArrayList<FlowerBean>> {
@@ -150,7 +169,8 @@ public class ShoppingCartActivity extends AppCompatActivity implements SwipeRefr
         @Override
         protected ArrayList<FlowerBean> doInBackground(Void... params) {
             try {
-                RequestBody requestBody = new FormBody.Builder().add("user_id", 1 + "").build();
+                RequestBody requestBody = new FormBody.Builder().add("user_id",
+                        String.valueOf(sharedPreferences.getInt(Constants.LOGGED_USER_ID, 0))).build();
                 Request request = new Request.Builder().url(Constants.getURL()
                         + "/shopping_cart_list").post(requestBody).build();
                 Response response = new OkHttpClient().newCall(request).execute();
@@ -177,7 +197,7 @@ public class ShoppingCartActivity extends AppCompatActivity implements SwipeRefr
         protected void onPostExecute(ArrayList<FlowerBean> flowerBeanArrayList) {
             if (flowerBeanArrayList != null) {
                 Message message = new Message();
-                message.arg1 = 1;
+                message.arg1 = HANDLER_SHOW_FLOWER_LIST_TAG;
                 message.obj = flowerBeanArrayList;
                 handler.handleMessage(message);
             }
