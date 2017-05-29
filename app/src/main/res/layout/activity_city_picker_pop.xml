@@ -1,9 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.joker.flowershop.ui.CityPickerPopActivity">
+    android:orientation="vertical"
+    tools:context="com.joker.flowershop.ui.setting.CityPickerPopActivity">
 
-</android.support.constraint.ConstraintLayout>
+    <LinearLayout
+        android:id="@+id/jump_to"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/colorPrimary"
+        android:gravity="center_vertical"
+        android:padding="@dimen/title_margin">
+
+        <ImageView
+            android:id="@+id/choice_city_close"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/title_margin"
+            android:layout_marginStart="@dimen/title_margin"
+            android:background="@drawable/ic_close_white_24dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingStart="@dimen/activity_horizontal_margin"
+            android:text="选择城市"
+            android:textColor="@color/colorWhite"
+            android:textSize="20dp" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
+            android:orientation="vertical">
+
+            <!--<android.support.v7.widget.SearchView-->
+            <!--android:id="@+id/city_search_view"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_margin="@dimen/title_margin"-->
+            <!--android:background="@drawable/card_background"-->
+            <!--android:iconifiedByDefault="false"-->
+            <!--android:queryHint="输入城市名或拼音查询" />-->
+
+            <EditText
+                android:id="@+id/city_search_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/title_margin"
+                android:background="@drawable/card_background"
+                android:drawableLeft="@drawable/ic_search_black_24dp"
+                android:drawableStart="@drawable/ic_search_black_24dp"
+                android:gravity="center_vertical"
+                android:hint=" 查询"
+                android:imeOptions="actionSearch"
+                android:maxLines="1"
+                android:padding="@dimen/title_margin" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:text="定位城市" />
+
+            <LinearLayout
+                android:id="@+id/location_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/title_margin"
+                android:background="@drawable/card_background"
+                android:paddingBottom="12dp"
+                android:paddingLeft="@dimen/activity_horizontal_margin"
+                android:paddingRight="@dimen/activity_horizontal_margin"
+                android:paddingTop="12dp">
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_place_primary_color_24dp"/>
+                <TextView
+                    android:id="@+id/the_choice_city"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="定位中..."
+                    android:textColor="@color/colorDarkGray"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <!--<TextView-->
+                <!--android:id="@+id/the_choice_city"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_margin="@dimen/title_margin"-->
+                <!--android:background="@drawable/card_background"-->
+                <!--android:paddingBottom="12dp"-->
+                <!--android:paddingLeft="26dp"-->
+                <!--android:paddingRight="26dp"-->
+                <!--android:paddingTop="12dp"-->
+                <!--android:text="杭州"-->
+                <!--android:textColor="@color/colorDarkGray"-->
+                <!--android:textSize="16sp" />-->
+
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/city_recycler_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
