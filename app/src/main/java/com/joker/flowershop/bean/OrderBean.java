@@ -1,11 +1,13 @@
 package com.joker.flowershop.bean;
 
+import java.io.Serializable;
+
 /**
  * 订单Bean
  * Created by joker on 5/12 0012.
  */
 
-public class OrderBean {
+public class OrderBean implements Serializable {
 
     private int id;
 

@@ -9,6 +9,7 @@ import java.util.List;
  */
 
 public class ProvinceBean implements IPickerViewData {
+
     /**
      * name : 省份
      * city : [{"name":"北京市","area":["东城区","西城区","崇文区","宣武区","朝阳区"]}]

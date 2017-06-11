@@ -36,11 +36,12 @@ public class ShoppingCartAdapter extends BaseQuickAdapter<FlowerBean, BaseViewHo
         viewHolder.setText(R.id.title, flowerBean.getTitle())
                 .setText(R.id.introduction, flowerBean.getIntroduction())
                 .setText(R.id.price, flowerBean.getPrice() + "")
-                .addOnClickListener(R.id.flower_item);
+                .addOnClickListener(R.id.shopping_cart_item)
+        ;
         Uri uri = Uri.parse(flowerBean.getImageURL());
         Glide.with(mContext).load(uri).centerCrop().
                 into((ImageView) viewHolder.getView(R.id.image));
-        viewHolder.getView(R.id.flower_item).setOnClickListener(new View.OnClickListener() {
+        viewHolder.getView(R.id.shopping_cart_item).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(mContext, FlowerDetailActivity.class);

@@ -52,67 +52,86 @@
             <!--android:iconifiedByDefault="false"-->
             <!--android:queryHint="输入城市名或拼音查询" />-->
 
-            <EditText
-                android:id="@+id/city_search_view"
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="@dimen/title_margin"
-                android:background="@drawable/card_background"
-                android:drawableLeft="@drawable/ic_search_black_24dp"
-                android:drawableStart="@drawable/ic_search_black_24dp"
-                android:gravity="center_vertical"
-                android:hint=" 查询"
-                android:imeOptions="actionSearch"
-                android:maxLines="1"
-                android:padding="@dimen/title_margin" />
+                android:layout_margin="@dimen/title_margin">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingLeft="@dimen/activity_horizontal_margin"
-                android:text="定位城市" />
+                <EditText
+                    android:id="@+id/city_search_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/card_background"
+                    android:drawableLeft="@drawable/ic_search_black_24dp"
+                    android:drawableStart="@drawable/ic_search_black_24dp"
+                    android:gravity="center_vertical"
+                    android:hint=" 查询"
+                    android:imeOptions="actionSearch"
+                    android:maxLength="15"
+                    android:maxLines="1"
+                    android:padding="@dimen/title_margin" />
+
+                <ImageView
+                    android:id="@+id/clear_search"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical|end"
+                    android:layout_marginEnd="@dimen/title_margin"
+                    android:layout_marginRight="@dimen/title_margin"
+                    android:src="@drawable/ic_cancel_black_24dp"
+                    android:visibility="gone" />
+
+            </FrameLayout>
 
             <LinearLayout
-                android:id="@+id/location_button"
-                android:layout_width="wrap_content"
+                android:id="@+id/default_city_list"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_margin="@dimen/title_margin"
-                android:background="@drawable/card_background"
-                android:paddingBottom="12dp"
-                android:paddingLeft="@dimen/activity_horizontal_margin"
-                android:paddingRight="@dimen/activity_horizontal_margin"
-                android:paddingTop="12dp">
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/ic_place_primary_color_24dp"/>
+                android:orientation="vertical">
+
                 <TextView
-                    android:id="@+id/the_choice_city"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="定位中..."
-                    android:textColor="@color/colorDarkGray"
-                    android:textSize="16sp" />
+                    android:paddingLeft="@dimen/activity_horizontal_margin"
+                    android:text="定位城市" />
+
+                <LinearLayout
+                    android:id="@+id/location_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="@dimen/title_margin"
+                    android:background="@drawable/card_background"
+                    android:paddingBottom="12dp"
+                    android:paddingLeft="@dimen/activity_horizontal_margin"
+                    android:paddingRight="@dimen/activity_horizontal_margin"
+                    android:paddingTop="12dp">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/ic_place_primary_color_24dp" />
+
+                    <TextView
+                        android:id="@+id/location_city"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginRight="5dp"
+                        android:text="定位中..."
+                        android:textColor="@color/colorDarkGray"
+                        android:textSize="16sp" />
+                </LinearLayout>
+
+                <android.support.v7.widget.RecyclerView
+                    android:id="@+id/city_recycler_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
             </LinearLayout>
 
-            <!--<TextView-->
-                <!--android:id="@+id/the_choice_city"-->
-                <!--android:layout_width="wrap_content"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:layout_margin="@dimen/title_margin"-->
-                <!--android:background="@drawable/card_background"-->
-                <!--android:paddingBottom="12dp"-->
-                <!--android:paddingLeft="26dp"-->
-                <!--android:paddingRight="26dp"-->
-                <!--android:paddingTop="12dp"-->
-                <!--android:text="杭州"-->
-                <!--android:textColor="@color/colorDarkGray"-->
-                <!--android:textSize="16sp" />-->
-
             <android.support.v7.widget.RecyclerView
-                android:id="@+id/city_recycler_list"
+                android:id="@+id/search_result_recycler_view"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:visibility="gone"/>
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

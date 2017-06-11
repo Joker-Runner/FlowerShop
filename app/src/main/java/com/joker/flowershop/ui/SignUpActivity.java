@@ -18,6 +18,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
@@ -60,13 +61,27 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
      */
     private UserSignUpTask mAuthTask = null;
 
+    /**
+     * 获取验证码的异步任务
+     */
+    private UserGetVerificationCodeTask mUserGetVerificationCodeTask = null;
+
     // UI references.
+
+    // 用户名
+    private EditText mUsernameView;
 
     // 用户名：邮箱
     private AutoCompleteTextView mEmailView;
 
     // 用户密码
     private EditText mPasswordView;
+
+    // 验证码
+    private EditText mVerificationCode;
+
+    // 获取验证码
+    private Button mGetVerificationCode;
 
     // 注册按钮
     private Button mSignUpButton;
@@ -80,17 +95,22 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
     //
     private Intent intent;
 
+    // 验证码
+    private String theVerificationCode = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_up);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         // Set up the login form.
+        mUsernameView = (EditText) findViewById(R.id.username);
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
         populateAutoComplete();
 
         mPasswordView = (EditText) findViewById(R.id.password);
-        mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+        mVerificationCode = (EditText) findViewById(R.id.verification_code);
+        mVerificationCode.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
                 if (id == R.id.sign_up || id == EditorInfo.IME_NULL) {
@@ -101,6 +121,13 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
             }
         });
 
+        mGetVerificationCode = (Button) findViewById(R.id.get_verification_code);
+        mGetVerificationCode.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                attemptGetVerificationCode();
+            }
+        });
         mSignUpButton = (Button) findViewById(R.id.email_sign_in_button);
         mSignUpButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -169,6 +196,37 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
         }
     }
 
+    private void attemptGetVerificationCode() {
+        if (mUserGetVerificationCodeTask != null) {
+            return;
+        }
+        mEmailView.setError(null);
+        String email = mEmailView.getText().toString();
+        boolean cancel = false;
+        View focusView = null;
+
+        if (TextUtils.isEmpty(email)) {
+            mEmailView.setError(getString(R.string.error_field_required));
+            focusView = mEmailView;
+            cancel = true;
+        } else if (!isEmailValid(email)) {
+            mEmailView.setError(getString(R.string.error_invalid_email));
+            focusView = mEmailView;
+            cancel = true;
+        }
+
+        if (cancel) {
+            // There was an error; don't attempt login and focus the first
+            // form field with an error.
+            focusView.requestFocus();
+        } else {
+            // Show a progress spinner, and kick off a background task to
+            // perform the user login attempt.
+            mUserGetVerificationCodeTask = new UserGetVerificationCodeTask(email);
+            mUserGetVerificationCodeTask.execute((Void[]) null);
+        }
+    }
+
     /**
      * 登录或按给定邮箱注册用户。
      * 如果有错误（邮箱格式错误，密码过短等）将不会登录。
@@ -179,15 +237,26 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
         }
 
         // Reset errors.
+        mUsernameView.setError(null);
         mEmailView.setError(null);
         mPasswordView.setError(null);
+        mVerificationCode.setError(null);
 
         // Store values at the time of the login attempt.
+        String username = mUsernameView.getText().toString();
         String email = mEmailView.getText().toString();
         String password = mPasswordView.getText().toString();
+        String verificationCode = mVerificationCode.getText().toString();
 
         boolean cancel = false;
         View focusView = null;
+
+        // Check for a valid username address.
+        if (TextUtils.isEmpty(username)) {
+            mUsernameView.setError(getString(R.string.error_field_required));
+            focusView = mUsernameView;
+            cancel = true;
+        }
 
         // Check for a valid email address.
         if (TextUtils.isEmpty(email)) {
@@ -211,6 +280,17 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
             cancel = true;
         }
 
+        // Check for a valid verificationCode, if the user entered one.
+        if (TextUtils.isEmpty(verificationCode)) {
+            mVerificationCode.setError(getString(R.string.error_field_required));
+            focusView = mVerificationCode;
+            cancel = true;
+        } else if (!isVerificationCodeValid(verificationCode)) {
+            mVerificationCode.setError(getString(R.string.error_invalid_verification_code));
+            focusView = mVerificationCode;
+            cancel = true;
+        }
+
         if (cancel) {
             // There was an error; don't attempt login and focus the first
             // form field with an error.
@@ -219,7 +299,7 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            mAuthTask = new UserSignUpTask(email, password);
+            mAuthTask = new UserSignUpTask(username, email, password);
             mAuthTask.execute((Void) null);
         }
     }
@@ -230,6 +310,10 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
 
     private boolean isPasswordValid(String password) {
         return password.length() > 4;
+    }
+
+    private boolean isVerificationCodeValid(String verificationCode){
+        return verificationCode.equals(theVerificationCode);
     }
 
     /**
@@ -345,12 +429,65 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
     /**
      * 异步任务：用于登录/注册用户。
      */
+    private class UserGetVerificationCodeTask extends AsyncTask<Void, Void, String> {
+
+        private final String mEmail;
+
+        UserGetVerificationCodeTask(String email) {
+            mEmail = email;
+        }
+
+        @Override
+        protected String doInBackground(Void... params) {
+            String responseData = null;
+            try {
+                RequestBody requestBody = new FormBody.Builder().add("email", mEmail).build();
+                Request request = new Request.Builder()
+                        .url(Constants.getURL() + "/verification_code").post(requestBody).build();
+                Response response = new OkHttpClient().newCall(request).execute();
+                responseData = response.body().string();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return responseData;
+        }
+
+
+        /**
+         * @param responseData 0：已被注册；-1：出错；或者未被注册并返回验证码；
+         */
+        @Override
+        protected void onPostExecute(final String responseData) {
+            mUserGetVerificationCodeTask = null;
+            showProgress(false);
+            if (responseData == null || responseData.equals("-1")) {
+                Toast.makeText(SignUpActivity.this, "获取验证码失败，请重试", Toast.LENGTH_LONG).show();
+            } else if (responseData.equals("0")) {
+                Toast.makeText(SignUpActivity.this, "改邮箱已被注册，请检查邮箱是否拼写正确", Toast.LENGTH_LONG).show();
+            } else if (responseData.length() == 6) {
+                theVerificationCode = responseData;
+                Toast.makeText(SignUpActivity.this, "发送验证码成功", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+            mUserGetVerificationCodeTask = null;
+        }
+    }
+
+    /**
+     * 异步任务：用于登录/注册用户。
+     */
     private class UserSignUpTask extends AsyncTask<Void, Void, Boolean> {
 
+        private final String mUsername;
         private final String mEmail;
         private final String mPassword;
 
-        UserSignUpTask(String email, String password) {
+        UserSignUpTask(String username, String email, String password) {
+            mUsername = username;
             mEmail = email;
             mPassword = password;
         }
@@ -359,8 +496,8 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
         protected Boolean doInBackground(Void... params) {
             String responseData = null;
             try {
-                RequestBody requestBody = new FormBody.Builder()
-                        .add("username", mEmail).add("password", mPassword).build();
+                RequestBody requestBody = new FormBody.Builder().add("username", mUsername)
+                        .add("email", mEmail).add("password", mPassword).build();
                 Request request = new Request.Builder()
                         .url(Constants.getURL() + "/sign_up").post(requestBody).build();
                 Response response = new OkHttpClient().newCall(request).execute();
@@ -370,19 +507,21 @@ public class SignUpActivity extends AppCompatActivity implements LoaderCallbacks
                 e.printStackTrace();
             }
 
-            return responseData != null && responseData.equals("true");
+            Log.i("TAG",responseData);
+            return responseData != null && responseData.equals("1");
         }
 
         @Override
         protected void onPostExecute(final Boolean success) {
             mAuthTask = null;
             showProgress(false);
+            Log.i("TAG",success+"");
             if (success) {
                 //注册成功，跳转到登录界面，并返回用户名
                 Bundle bundle = new Bundle();
                 bundle.putCharSequence("email", mEmail);
                 intent.putExtras(bundle);
-                SignUpActivity.this.setResult(1, intent);
+                SignUpActivity.this.setResult(RESULT_OK, intent);
                 SignUpActivity.this.finish();
             } else {
                 Toast.makeText(SignUpActivity.this, "注册失败，请重试", Toast.LENGTH_LONG).show();

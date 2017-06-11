@@ -60,7 +60,7 @@ public class OrderActivity extends AppCompatActivity {
 
     private void setOrderList(final ArrayList<OrderBean> orderBeanArrayList){
         orderList.setLayoutManager(new LinearLayoutManager(OrderActivity.this));
-        OrderAdapter orderAdapter = new OrderAdapter(OrderActivity.this, orderBeanArrayList);
+        OrderAdapter orderAdapter = new OrderAdapter( orderBeanArrayList);
 //        recyclerViewAdapter.setOnItemClickListener(new FlowerAdapter.OnItemClickListener() {
 //            @Override
 //            public void onItemClick(View view, int position) {

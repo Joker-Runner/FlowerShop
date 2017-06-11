@@ -3,11 +3,10 @@ package com.joker.flowershop.ui;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.text.InputType;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -22,10 +21,11 @@ import com.joker.flowershop.R;
 import com.joker.flowershop.bean.ProvinceBean;
 import com.joker.flowershop.bean.ReceiverBean;
 import com.joker.flowershop.utils.Constants;
-import com.joker.flowershop.utils.GetJsonDataUtil;
+import com.joker.flowershop.utils.Utils;
 
 import org.json.JSONArray;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import static com.joker.flowershop.R.id.address_edit;
@@ -173,7 +173,13 @@ public class CreateNewAddressActivity extends AppCompatActivity {
          * 注意：assets 目录下的Json文件仅供参考，实际使用可自行替换文件
          * 关键逻辑在于循环体
          * */
-        String JsonData = new GetJsonDataUtil().getJson(this, "province.json");//获取assets目录下的json文件数据
+        String JsonData = null;//获取assets目录下的json文件数据
+        try {
+            JsonData = new Utils().getJson(this, "province.json");
+            mHandler.sendEmptyMessage(MSG_LOAD_FAILED);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         ArrayList<ProvinceBean> provinceBean = parseData(JsonData);//用Gson 转成实体
 

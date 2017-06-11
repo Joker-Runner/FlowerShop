@@ -9,7 +9,7 @@
     <color name="colorDrawerArrow">@color/colorWhite</color>
 
     <color name="colorBackground">#FAFAFA</color>
-    <color name="colorRipple">#9E9E9E</color>
+    <color name="colorRipple">#E0E0E0</color>
 
     <color name="colorItemBackground">#E0E0E0</color>
     <color name="colorHintText">#E0E0E0</color>
@@ -19,5 +19,7 @@
     <color name="colorDarkRed">#C62828</color>
     <color name="colorWhite">#FFFFFF</color>
     <color name="colorGray">#616161</color>
+    <color name="colorLightGray">#BDBDBD</color>
+    <color name="colorDarkGray">#212121</color>
     <color name="colorBlank">#000000</color>
 </resources>

@@ -1,4 +1,4 @@
-package com.joker.flowershop.ui;
+package com.joker.flowershop.ui.setting;
 
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -11,6 +11,7 @@ import android.view.View;
 import android.widget.Button;
 
 import com.joker.flowershop.R;
+import com.joker.flowershop.ui.CreateNewAddressActivity;
 import com.joker.flowershop.utils.Constants;
 
 public class SettingActivity extends AppCompatActivity implements View.OnClickListener {
@@ -71,6 +72,7 @@ public class SettingActivity extends AppCompatActivity implements View.OnClickLi
                     public void onClick(DialogInterface dialog, int which) {
                         editor.remove(Constants.LOGGED_IN).commit();
                         editor.remove(Constants.LOGGED_USER_ID).commit();
+                        editor.remove(Constants.LOGGED_USER_JSON).commit();
                         sign_out.setVisibility(View.GONE);
                     }
                 });

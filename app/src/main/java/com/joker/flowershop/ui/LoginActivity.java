@@ -30,10 +30,15 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import com.joker.flowershop.R;
+import com.joker.flowershop.bean.UserBean;
 import com.joker.flowershop.utils.Constants;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,7 +98,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         setContentView(R.layout.activity_login);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        sharedPreferences = getSharedPreferences(Constants.INIT_SETTING_SHARED,MODE_APPEND);
+        sharedPreferences = getSharedPreferences(Constants.INIT_SETTING_SHARED, MODE_APPEND);
         editor = sharedPreferences.edit();
 
         // Set up the login form.
@@ -125,8 +130,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(LoginActivity.this, SignUpActivity.class);
-//                startActivity(intent);
-                startActivityForResult(intent, 0);
+                startActivityForResult(intent, Constants.REQUEST_CODE_SIGN_UP);
             }
         });
 
@@ -140,15 +144,15 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * 启动注册Activity的回调函数
      *
      * @param requestCode 请求码
-     * @param resultCode 结果码
-     * @param data 数据Intent
+     * @param resultCode  结果码
+     * @param data        数据Intent
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        switch (resultCode) {
-            case 1:
-                if (data != null) {
+        switch (requestCode) {
+            case Constants.REQUEST_CODE_SIGN_UP:
+                if (resultCode == RESULT_OK && data != null) {
                     String email = (String) data.getExtras().getCharSequence("email");
                     mEmailView.setText(email);
                 }
@@ -386,7 +390,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     /**
      * 异步任务：用于登录/注册用户。
      */
-    private class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
+    private class UserLoginTask extends AsyncTask<Void, Void, String> {
 
         private final String mEmail;
         private final String mPassword;
@@ -397,32 +401,39 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         }
 
         @Override
-        protected Boolean doInBackground(Void... params) {
-            String responseData = null;
+        protected String doInBackground(Void... params) {
+            String userBeanJson = null;
             try {
                 RequestBody requestBody = new FormBody.Builder()
-                        .add("username", mEmail).add("password", mPassword).build();
+                        .add("email", mEmail).add("password", mPassword).build();
                 Request request = new Request.Builder()
                         .url(Constants.getURL() + "/login").post(requestBody).build();
                 Response response = new OkHttpClient().newCall(request).execute();
-                responseData = response.body().string();
-
+                userBeanJson = response.body().string();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-            return responseData != null && responseData.equals("true");
+            return userBeanJson;
         }
-
+// {"id":1,"email":"admin@qq.com","passWord":"admin","username":"Admin","icon":"http://123.206.201.169:8080/FlowerShop/flower/1495088033874.jpg"}
         @Override
-        protected void onPostExecute(final Boolean success) {
+        protected void onPostExecute(final String userBeanJson) {
             mAuthTask = null;
             showProgress(false);
 
-            if (success) {
+            UserBean userBean;
+
+            Type type = new TypeToken<UserBean>() {
+            }.getType();
+            Gson gson = new GsonBuilder().create();
+            userBean = gson.fromJson(userBeanJson, type);
+
+            if (userBean!=null) {
                 //登陆成功，跳转
-                editor.putInt(Constants.LOGGED_USER_ID,1).commit();
-                intent.putExtra(Constants.LOGGED_IN,true);
+                editor.putInt(Constants.LOGGED_USER_ID, userBean.getId()).commit();
+                editor.putString(Constants.LOGGED_USER_JSON,userBeanJson).commit();
+                intent.putExtra(Constants.LOGGED_IN_INTENT, true);
+                intent.putExtra(Constants.LOGGED_USER_INTENT,userBean);
                 LoginActivity.this.setResult(RESULT_OK, intent);
                 LoginActivity.this.finish();
             } else {

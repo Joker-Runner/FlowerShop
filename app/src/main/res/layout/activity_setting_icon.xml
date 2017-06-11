@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/setting_icon_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBlank"
+    tools:context="com.joker.flowershop.ui.setting.SettingIconActivity">
+
+    <ImageView
+        android:id="@+id/my_icon"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:adjustViewBounds="true" />
+
+    <Button
+        android:id="@+id/setting_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="@dimen/title_margin"
+        android:background="@drawable/rounded_rectangle_button_bg"
+        android:text="更改头像"
+        android:textColor="@color/colorWhite" />
+
+</RelativeLayout>

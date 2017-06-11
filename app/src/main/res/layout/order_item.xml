@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/order_item"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:background="@color/colorWhite"
-    android:layout_marginTop="@dimen/title_margin">
+    android:layout_marginTop="@dimen/title_margin"
+    android:background="@drawable/ripple_bg"
+    android:clickable="true"
+    android:orientation="vertical">
 
     <LinearLayout
-        android:id="@+id/flower_item"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:clickable="false"
         android:orientation="horizontal"
-        android:background="@drawable/item_background"
-        android:clickable="true"
         android:padding="@dimen/title_margin">
 
         <ImageView
@@ -66,26 +66,18 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:paddingRight="@dimen/title_margin">
 
         <Button
             android:id="@+id/order_status"
+            style="@style/Base.Widget.AppCompat.Button.Borderless"
             android:layout_width="wrap_content"
             android:layout_height="33dp"
-            android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
             android:layout_margin="@dimen/title_margin"
             android:background="@drawable/order_button_bg"
-            android:text="订单状态"/>
-
-        <Button
-            android:id="@+id/order_detail"
-            android:layout_width="wrap_content"
-            android:layout_height="33dp"
-            android:layout_margin="@dimen/title_margin"
-            android:layout_toLeftOf="@id/order_status"
-            android:layout_toStartOf="@id/order_status"
-            android:background="@drawable/order_button_bg"
-            android:text="订单详情"/>
+            android:text="订单状态" />
     </RelativeLayout>
 </LinearLayout>

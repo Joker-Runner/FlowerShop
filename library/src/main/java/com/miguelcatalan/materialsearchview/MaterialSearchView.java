@@ -1,6 +1,5 @@
 package com.miguelcatalan.materialsearchview;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -33,7 +32,6 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.miguelcatalan.materialsearchview.utils.AnimationUtil;
 
@@ -720,10 +718,9 @@ public class MaterialSearchView extends FrameLayout implements Filter.FilterList
 
     public interface OnVoiceClickListener {
         /**
-         * 当点击Voice按钮时的回调接口，
-         * @return
+         * 当点击Voice按钮时的回调接口
          */
-        boolean onVoiceClick();
+        void onVoiceClick();
     }
 
     public interface OnQueryTextListener {

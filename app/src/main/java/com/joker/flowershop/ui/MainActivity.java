@@ -2,6 +2,7 @@ package com.joker.flowershop.ui;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -16,7 +17,6 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
@@ -24,11 +24,14 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.chad.library.adapter.base.BaseQuickAdapter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -42,15 +45,22 @@ import com.iflytek.cloud.ui.RecognizerDialog;
 import com.iflytek.cloud.ui.RecognizerDialogListener;
 import com.iflytek.sunflower.FlowerCollector;
 import com.joker.flowershop.R;
-import com.joker.flowershop.adapter.recycler.FlowerAdapter;
+import com.joker.flowershop.adapter.recycler.MainRecyclerAdapter;
 import com.joker.flowershop.adapter.recycler.ResourceItemDivider;
+import com.joker.flowershop.adapter.recycler.WrapContentLinearLayoutManager;
 import com.joker.flowershop.bean.FlowerBean;
+import com.joker.flowershop.bean.UserBean;
 import com.joker.flowershop.ui.order.OrderActivity;
 import com.joker.flowershop.ui.qrcode.ScanActivity;
+import com.joker.flowershop.ui.setting.CityPickerPopActivity;
+import com.joker.flowershop.ui.setting.MeActivity;
+import com.joker.flowershop.ui.setting.SettingActivity;
 import com.joker.flowershop.ui.subject.SubjectActivity;
 import com.joker.flowershop.utils.Constants;
 import com.joker.flowershop.utils.msc.JsonParser;
 import com.miguelcatalan.materialsearchview.MaterialSearchView;
+import com.zhy.http.okhttp.OkHttpUtils;
+import com.zhy.http.okhttp.callback.StringCallback;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -61,6 +71,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import okhttp3.Call;
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -73,27 +86,43 @@ import okhttp3.Response;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, SwipeRefreshLayout.OnRefreshListener, View.OnClickListener {
 
-    private SwipeRefreshLayout swipeRefreshLayout;
-    private RecyclerView flowerList;
-    private MaterialSearchView searchView;
+    @BindView(R.id.swipe_refresh)
+    SwipeRefreshLayout swipeRefreshLayout;
+    @BindView(R.id.flower_recycler_list)
+    RecyclerView flowerList;
+    @BindView(R.id.search_view)
+    MaterialSearchView searchView;
+    @BindView(R.id.drawer_layout)
+    DrawerLayout drawer;
+    @BindView(R.id.nav_view)
+    NavigationView navigationView;
 
-    private DrawerLayout drawer;
     private ImageView nav_icon; // 头像
     private TextView userName; //用户名
     private TextView city;
     private LinearLayout selectCity;
 
+    private MainRecyclerAdapter mainRecyclerAdapter;
+    private ArrayList<FlowerBean> flowerBeanArrayList = new ArrayList<>();
+    private int flowerListSize = 0;
+
+
+    String userBeanJson;
+    UserBean userBean;
+
     private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor editor;
     private UserFlowerListTask userFlowerListTask = null;
-    private SearchFlowerTask searchFlowerTask = null;
+
+    Uri noticeUri;
+
 
     /**
      * Handler标签
      */
     private final static int HANDLER_SHOW_FLOWER_LIST_TAG = 1;
     private final static int HANDLER_SPEECH_RESULT_TAG = 2;
-
+    private final static int HANDLER_NOTICE_RESULT_TAG = 3;
 
     /**
      * 讯飞语音识别MSC
@@ -107,18 +136,16 @@ public class MainActivity extends AppCompatActivity
     // 引擎类型
     private String mEngineType = SpeechConstant.TYPE_CLOUD;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.setTheme(R.style.MainActivityTheme_NoActionBar);
         this.getWindow().setBackgroundDrawableResource(R.drawable.main_activity_bg);
         setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        flowerList = (RecyclerView) findViewById(R.id.flower_recycler_list);
-        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh);
         swipeRefreshLayout.setOnRefreshListener(this);
         swipeRefreshLayout.setColorSchemeColors(
                 ContextCompat.getColor(this, android.R.color.holo_orange_light),
@@ -126,17 +153,11 @@ public class MainActivity extends AppCompatActivity
                 ContextCompat.getColor(this, android.R.color.holo_green_light),
                 ContextCompat.getColor(this, android.R.color.holo_red_light));
 
-        setSearchView();
-        initMSC();
-        initRecyclerList();
-
-        drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
         View headerView = navigationView.inflateHeaderView(R.layout.nav_header_main);
@@ -149,14 +170,28 @@ public class MainActivity extends AppCompatActivity
 
         sharedPreferences = getSharedPreferences(Constants.INIT_SETTING_SHARED, MODE_APPEND);
         editor = sharedPreferences.edit();
+
+        initMSC();
+        setSearchView();
+        initRecyclerView();
+        resetRecyclerList();
+        initHeaderView();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         if (sharedPreferences.getBoolean(Constants.LOGGED_IN, false)) {
-            nav_icon.setImageResource(R.drawable.icon_default);
-            userName.setText("Joker_Runner");
+            userBeanJson = sharedPreferences.getString(Constants.LOGGED_USER_JSON, "{}");
+            Type type = new TypeToken<UserBean>() {
+            }.getType();
+            Gson gson = new GsonBuilder().create();
+            userBean = gson.fromJson(userBeanJson, type);
+            if (userBean != null) {
+                Glide.with(this).load(userBean.getIcon()).centerCrop().into(nav_icon);
+                userName.setText(userBean.getUsername());
+                city.setText(userBean.getCity());
+            }
         } else {
             nav_icon.setImageResource(R.drawable.icon_none);
             userName.setText(getString(R.string.action_sign));
@@ -165,32 +200,94 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onRefresh() {
-        initRecyclerList();
-    }
-
-    private void initRecyclerList() {
-        setTitle(getString(R.string.app_name));
         swipeRefreshLayout.setRefreshing(true);
-        userFlowerListTask = new UserFlowerListTask();
-        userFlowerListTask.execute((Void) null);
+        resetRecyclerList();
         swipeRefreshLayout.setRefreshing(false);
     }
 
-    private void setFlowerList(final ArrayList<FlowerBean> flowerBeanArrayList) {
-        flowerList.setLayoutManager(new LinearLayoutManager(MainActivity.this));
-        FlowerAdapter flowerAdapter = new FlowerAdapter(MainActivity.this, flowerBeanArrayList);
-        flowerAdapter.setOnItemClickListener(new FlowerAdapter.OnItemClickListener() {
+    private RecyclerView.OnScrollListener onScrollListener = new RecyclerView.OnScrollListener() {
+        @Override
+        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+            if (!recyclerView.canScrollVertically(1)) {// 手指不能向上滑动了
+                // TODO 这里有个注意的地方，如果你刚进来时没有数据，但是设置了适配器，这个时候就会触发加载更多，需要开发者判断下是否有数据，如果有数据才去加载更多。
+//                Toast.makeText(MainActivity.this, "滑到最底部了，去加载更多吧！", Toast.LENGTH_SHORT).show();
+                flowerListSize += 6;
+                // TODO 添加列表
+                if (userFlowerListTask == null) {
+                    userFlowerListTask = new UserFlowerListTask(flowerListSize);
+                    userFlowerListTask.execute((Void[]) null);
+                }
+            }
+        }
+    };
+
+
+    private void initHeaderView() {
+        OkHttpUtils.get().url(Constants.getURL() + "/get_notice").build().execute(new StringCallback() {
             @Override
-            public void onItemClick(View view, int position) {
+            public void onError(Call call, Exception e, int id) {
+            }
+
+            @Override
+            public void onResponse(String response, int id) {
+                noticeUri = Uri.parse(response.toString());
+                Message message = new Message();
+                message.arg1 = HANDLER_NOTICE_RESULT_TAG;
+                message.obj = noticeUri;
+                handler.sendMessage(message);
+            }
+        });
+    }
+
+
+    private void initRecyclerView() {
+        try {
+            flowerList.setLayoutManager(new WrapContentLinearLayoutManager(MainActivity.this));
+        } catch (Exception e) {
+            Log.e("TAG", "LinearLayoutManager Exception");
+        }
+        flowerList.addItemDecoration(new ResourceItemDivider(this, R.drawable.divider));
+        flowerList.addOnScrollListener(onScrollListener);
+
+        mainRecyclerAdapter = new MainRecyclerAdapter(flowerBeanArrayList);
+        mainRecyclerAdapter.setOnItemClickListener(new BaseQuickAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(BaseQuickAdapter adapter, View view, int position) {
                 Log.d("TAG", position + "");
                 Intent intent = new Intent(MainActivity.this, FlowerDetailActivity.class);
                 intent.putExtra("flower", flowerBeanArrayList.get(position));
                 startActivity(intent);
             }
         });
-        flowerList.setAdapter(flowerAdapter);
-        flowerList.addItemDecoration(new ResourceItemDivider(this, R.drawable.divider));
+        flowerList.setAdapter(mainRecyclerAdapter);
     }
+
+    private void resetRecyclerList() {
+        setTitle(getString(R.string.app_name));
+        flowerBeanArrayList.clear();
+        flowerListSize = 0;
+        if (userFlowerListTask == null) {
+            userFlowerListTask = new UserFlowerListTask(0);
+            userFlowerListTask.execute((Void) null);
+        }
+    }
+
+    private View getHeaderView(int type, Uri uri, View.OnClickListener onClickListener) {
+        View view = getLayoutInflater().inflate(R.layout.header_item, (ViewGroup) flowerList.getParent(), false);
+
+        if (type == 1) {
+            ImageView imageView = (ImageView) view.findViewById(R.id.header_image);
+
+            if (uri != null) {
+                Glide.with(this).load(uri).into(imageView);
+            } else {
+                imageView.setImageResource(R.drawable.google);
+            }
+        }
+        view.setOnClickListener(onClickListener);
+        return view;
+    }
+
 
     private Handler handler = new Handler() {
         @Override
@@ -198,8 +295,8 @@ public class MainActivity extends AppCompatActivity
             super.handleMessage(msg);
             switch (msg.arg1) {
                 case HANDLER_SHOW_FLOWER_LIST_TAG: // 获取到Flower的列表，进行UI加载
-                    final ArrayList<FlowerBean> flowerBeanArrayList = (ArrayList<FlowerBean>) msg.obj;
-                        setFlowerList(flowerBeanArrayList);
+                    flowerBeanArrayList.addAll((ArrayList<FlowerBean>) msg.obj);
+                    mainRecyclerAdapter.notifyDataSetChanged();
                     break;
                 case HANDLER_SPEECH_RESULT_TAG: // 语音识别成功
                     String result = (String) msg.obj;
@@ -207,22 +304,32 @@ public class MainActivity extends AppCompatActivity
                         searchView.setQuery(result, false);
                     }
                     break;
+                case HANDLER_NOTICE_RESULT_TAG:
+                    Uri noticeUri = (Uri) msg.obj;
+                    mainRecyclerAdapter.addHeaderView(getHeaderView(1, noticeUri, new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Toast.makeText(MainActivity.this, "HeaderView", Toast.LENGTH_SHORT).show();
+                        }
+                    }));
+                    mainRecyclerAdapter.notifyItemRangeInserted(0, 1);
+                    mainRecyclerAdapter.notifyDataSetChanged();
+                    break;
             }
         }
     };
 
     private void setSearchView() {
-        searchView = (MaterialSearchView) findViewById(R.id.search_view);
         searchView.setVoiceSearch(true);
         searchView.setCursorDrawable(R.drawable.color_cursor_white);
         searchView.setSuggestions(getResources().getStringArray(R.array.query_suggestions));
         searchView.setOnVoiceClickListener(new MaterialSearchView.OnVoiceClickListener() {
             @Override
-            public boolean onVoiceClick() {
+            public void onVoiceClick() {
                 if (null == mIat) {
                     // 创建单例失败，与 21001 错误为同样原因，参考 http://bbs.xfyun.cn/forum.php?mod=viewthread&tid=9688
-                    Toast.makeText(MainActivity.this,"创建对象失败，请确认 libmsc.so 放置正确，且有调用 createUtility 进行初始化",Toast.LENGTH_SHORT).show();
-                    return false;
+                    Toast.makeText(MainActivity.this, "创建对象失败，请确认 libmsc.so 放置正确，且有调用 createUtility 进行初始化", Toast.LENGTH_SHORT).show();
+                    return;
                 }
 
                 // 移动数据分析，收集开始听写事件
@@ -235,15 +342,14 @@ public class MainActivity extends AppCompatActivity
                 // 显示听写对话框
                 mIatDialog.setListener(mRecognizerDialogListener);
                 mIatDialog.show();
-                return false;
             }
         });
         searchView.setOnQueryTextListener(new MaterialSearchView.OnQueryTextListener() {
             @Override
             public boolean onQueryTextSubmit(String query) {
-                searchFlowerTask = new SearchFlowerTask(query);
-                searchFlowerTask.execute((Void) null);
-                MainActivity.this.setTitle(query + " ...");
+                Intent intent = new Intent(MainActivity.this, SearchResultActivity.class);
+                intent.putExtra("query_keyword", query);
+                startActivity(intent);
                 return false;
             }
 
@@ -271,10 +377,13 @@ public class MainActivity extends AppCompatActivity
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
             case Constants.REQUEST_CODE_LOGIN:
-                if (resultCode == RESULT_OK && data.getBooleanExtra(Constants.LOGGED_IN, false)) {
-                    nav_icon.setImageResource(R.drawable.icon_default);
-                    userName.setText("Joker_Runner");
+                if (resultCode == RESULT_OK && data.getBooleanExtra(Constants.LOGGED_IN_INTENT, false)) {
                     editor.putBoolean(Constants.LOGGED_IN, true).commit();
+                    UserBean userBean = (UserBean) data.getSerializableExtra(Constants.LOGGED_USER_INTENT);
+                    Log.d("TAG", userBean.getIcon());
+                    Log.d("TAG", userBean.getUsername());
+                    Glide.with(this).load(userBean.getIcon()).centerCrop().into(nav_icon);
+                    userName.setText(userBean.getUsername());
                 }
                 break;
             case MaterialSearchView.REQUEST_VOICE:
@@ -285,6 +394,41 @@ public class MainActivity extends AppCompatActivity
                         if (!TextUtils.isEmpty(searchWrd)) {
                             searchView.setQuery(searchWrd, false);
                         }
+                    }
+                }
+                break;
+            case Constants.REQUEST_CODE_SELECT_CITY:
+                if (resultCode == RESULT_OK) {
+                    String selectedCity = data.getStringExtra("city");
+                    String selectedCityCode = data.getStringExtra("city_code");
+                    if (userBean != null) {
+                        userBean.setCity(selectedCity);
+                        userBean.setCityCode(selectedCityCode);
+                        editor.putString(Constants.LOGGED_USER_JSON, new Gson().toJson(userBean)).commit();
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                OkHttpUtils.post().url(Constants.getURL() + "/setting_city")
+                                        .addParams("user_id", String.valueOf(userBean.getId()))
+                                        .addParams("city_code", userBean.getCityCode())
+                                        .addParams("city", userBean.getCity())
+                                        .build().execute(new StringCallback() {
+                                    @Override
+                                    public void onError(Call call, Exception e, int id) {
+
+                                    }
+
+                                    @Override
+                                    public void onResponse(String response, int id) {
+
+                                    }
+                                });
+                            }
+                        }).start();
+                    }
+                    // TODO: 6/1 0001 设置商店的城市 是否登录的城市选择
+                    if (!selectedCity.equals("")) {
+                        city.setText(selectedCity);
                     }
                 }
                 break;
@@ -328,16 +472,20 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void run() {
                 switch (id) {
-//                    case R.id.nav_home:
-////                        HomeFragment homeFragment = new HomeFragment();
-////                        setMainContent(homeFragment);
-//                        break;
                     case R.id.nav_subject:
                         // 点击后立即点返回会 NullPointerException
                         Intent intentSubject = new Intent(MainActivity.this, SubjectActivity.class);
                         startActivity(intentSubject);
                         break;
                     case R.id.nav_star:
+                        if (sharedPreferences.getBoolean(Constants.LOGGED_IN, false)) {
+                            Intent intentStar = new Intent(MainActivity.this, StarActivity.class);
+                            startActivity(intentStar);
+                        } else {
+                            Toast.makeText(MainActivity.this, "请先登录", Toast.LENGTH_LONG).show();
+                            Intent intentLogin = new Intent(MainActivity.this, LoginActivity.class);
+                            startActivityForResult(intentLogin, Constants.REQUEST_CODE_LOGIN);
+                        }
                         break;
                     case R.id.nav_shopping_car:
                         if (sharedPreferences.getBoolean(Constants.LOGGED_IN, false)) {
@@ -346,24 +494,34 @@ public class MainActivity extends AppCompatActivity
                         } else {
                             Toast.makeText(MainActivity.this, "请先登录", Toast.LENGTH_LONG).show();
                             Intent intentLogin = new Intent(MainActivity.this, LoginActivity.class);
-                            startActivityForResult(intentLogin, 0);
+                            startActivityForResult(intentLogin, Constants.REQUEST_CODE_LOGIN);
                         }
                         break;
                     case R.id.nav_order:
-                        Intent intentOrder = new Intent(MainActivity.this, OrderActivity.class);
-                        startActivity(intentOrder);
+                        if (sharedPreferences.getBoolean(Constants.LOGGED_IN, false)) {
+                            Intent intentOrder = new Intent(MainActivity.this, OrderActivity.class);
+                            startActivity(intentOrder);
+                        } else {
+                            Toast.makeText(MainActivity.this, "请先登录", Toast.LENGTH_LONG).show();
+                            Intent intentLogin = new Intent(MainActivity.this, LoginActivity.class);
+                            startActivityForResult(intentLogin, Constants.REQUEST_CODE_LOGIN);
+                        }
                         break;
                     case R.id.nav_scan:
-                        Intent intent = new Intent(MainActivity.this, ScanActivity.class);
-                        startActivity(intent);
+                        Intent intentScan = new Intent(MainActivity.this, ScanActivity.class);
+                        startActivity(intentScan);
                         break;
                     case R.id.nav_settings:
-                        Intent intent1 = new Intent(MainActivity.this, SettingActivity.class);
-                        startActivity(intent1);
+                        Intent intentSetting = new Intent(MainActivity.this, SettingActivity.class);
+                        startActivity(intentSetting);
                         break;
                     case R.id.nav_help_feedback:
+                        Intent intentHelp = new Intent(MainActivity.this,HelpAndFeedbackActivity.class);
+                        intentHelp.putExtra("user_id",userBean.getId());
+                        startActivity(intentHelp);
                         break;
                     case R.id.nav_share:
+                        Intent intentShare;
                         break;
                     default:
                         break;
@@ -378,21 +536,24 @@ public class MainActivity extends AppCompatActivity
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.nav_icon:
-                if (sharedPreferences.getBoolean(Constants.LOGGED_IN, false)) {
-                    Toast.makeText(MainActivity.this, "已经登录", Toast.LENGTH_LONG).show();
-                } else {
-                    drawer.closeDrawer(GravityCompat.START);
-                    new Handler().postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
+                drawer.closeDrawer(GravityCompat.START);
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (sharedPreferences.getBoolean(Constants.LOGGED_IN, false)) {
+                            Intent intent = new Intent(MainActivity.this, MeActivity.class);
+                            startActivity(intent);
+                        } else {
                             Intent intent = new Intent(MainActivity.this, LoginActivity.class);
                             startActivityForResult(intent, Constants.REQUEST_CODE_LOGIN);
                         }
-                    }, 200);
-                }
+                    }
+                }, 200);
                 break;
             case R.id.select_city:
-                Toast.makeText(MainActivity.this, "切换城市", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(MainActivity.this, CityPickerPopActivity.class);
+                startActivityForResult(intent, Constants.REQUEST_CODE_SELECT_CITY);
+//                Toast.makeText(MainActivity.this, "切换城市", Toast.LENGTH_SHORT).show();
                 break;
             default:
                 break;
@@ -421,7 +582,7 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void onInit(int code) {
             if (code != ErrorCode.SUCCESS) {
-                Toast.makeText(MainActivity.this,"初始化失败，错误码：" + code,Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "初始化失败，错误码：" + code, Toast.LENGTH_SHORT).show();
             }
         }
     };
@@ -464,7 +625,7 @@ public class MainActivity extends AppCompatActivity
          * 识别回调错误.
          */
         public void onError(SpeechError error) {
-            Toast.makeText(MainActivity.this,error.getPlainDescription(true),Toast.LENGTH_SHORT).show();
+            Toast.makeText(MainActivity.this, error.getPlainDescription(true), Toast.LENGTH_SHORT).show();
         }
 
     };
@@ -502,59 +663,16 @@ public class MainActivity extends AppCompatActivity
     }
 
     /**
-     * 搜索商品
-     */
-    private class SearchFlowerTask extends AsyncTask<Void, Void, ArrayList<FlowerBean>> {
-
-        private String keyword;
-
-        SearchFlowerTask(String keyword) {
-            this.keyword = keyword;
-        }
-
-        @Override
-        protected ArrayList<FlowerBean> doInBackground(Void... params) {
-            try {
-                RequestBody requestBody = new FormBody.Builder()
-                        .add("keyword", keyword).build();
-                Request request = new Request.Builder()
-                        .url(Constants.getURL() + "/search_flowers").post(requestBody).build();
-                Response response = new OkHttpClient().newCall(request).execute();
-                String flowerListJson = response.body().string();
-                Log.i("TAG", flowerListJson);
-                Type type = new TypeToken<ArrayList<FlowerBean>>() {
-                }.getType();
-                Gson gson = new GsonBuilder().create();
-                return gson.fromJson(flowerListJson, type);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(ArrayList<FlowerBean> flowerBeanArrayList) {
-            searchFlowerTask = null;
-            if (flowerBeanArrayList != null) {
-                Message message = new Message();
-                message.arg1 = HANDLER_SHOW_FLOWER_LIST_TAG;
-                message.obj = flowerBeanArrayList;
-                handler.handleMessage(message);
-            }
-        }
-
-        @Override
-        protected void onCancelled() {
-            searchFlowerTask = null;
-        }
-    }
-
-    /**
      * 用于加载列表的异步任务
      */
     private class UserFlowerListTask extends AsyncTask<Void, Void, ArrayList<FlowerBean>> {
 
-        String flowerListJson;
+        private String flowerListJson;
+        private int startNumber; // 请求的编号（startNumber——startNumber+6)
+
+        UserFlowerListTask(int startNumber) {
+            this.startNumber = startNumber;
+        }
 
         /**
          * 后台执行异步任务
@@ -565,8 +683,10 @@ public class MainActivity extends AppCompatActivity
         @Override
         protected ArrayList<FlowerBean> doInBackground(Void... params) {
             try {
+                RequestBody requestBody = new FormBody.Builder()
+                        .add("start_number", startNumber + "").build();
                 Request request = new Request.Builder()
-                        .url(Constants.getURL() + "/flower_list").get().build();
+                        .url(Constants.getURL() + "/flower_list").post(requestBody).build();
                 Response response = new OkHttpClient().newCall(request).execute();
                 flowerListJson = response.body().string();
                 Log.i("TAG", flowerListJson);
@@ -589,6 +709,7 @@ public class MainActivity extends AppCompatActivity
          */
         @Override
         protected void onPostExecute(ArrayList<FlowerBean> flowerBeanArrayList) {
+            userFlowerListTask = null;
             if (flowerBeanArrayList != null) {
                 Message message = new Message();
                 message.arg1 = HANDLER_SHOW_FLOWER_LIST_TAG;

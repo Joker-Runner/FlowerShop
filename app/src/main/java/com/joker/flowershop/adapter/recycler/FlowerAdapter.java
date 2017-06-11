@@ -10,9 +10,9 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.joker.flowershop.R;
 import com.joker.flowershop.bean.FlowerBean;
-import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
@@ -20,7 +20,6 @@ import java.util.List;
  *
  * Created by joker on 5/12 0012.
  */
-
 public class FlowerAdapter extends RecyclerView.Adapter<FlowerAdapter.ViewHolder> implements View.OnClickListener {
 
     private Context context;
@@ -49,7 +48,7 @@ public class FlowerAdapter extends RecyclerView.Adapter<FlowerAdapter.ViewHolder
         holder.price.setText("￥ " + flowerBean.getPrice());
         Log.d("TAG", flowerBean.getImageURL());
         Uri uri = Uri.parse(flowerBean.getImageURL());
-        Picasso.with(context).load(uri).resize(150, 150).centerCrop()
+        Glide.with(context).load(uri).centerCrop()
                 .placeholder(R.drawable.loading).into(holder.image);
     }
 
@@ -62,7 +61,7 @@ public class FlowerAdapter extends RecyclerView.Adapter<FlowerAdapter.ViewHolder
     public void onClick(View v) {
         if (mOnItemClickListener != null) {
             //注意这里使用getTag方法获取position
-            mOnItemClickListener.onItemClick(v,(int)v.getTag());
+            mOnItemClickListener.onItemClick(v, (int) v.getTag());
         }
     }
 
@@ -71,24 +70,22 @@ public class FlowerAdapter extends RecyclerView.Adapter<FlowerAdapter.ViewHolder
     }
 
     public interface OnItemClickListener {
-        void onItemClick(View view , int position);
+        void onItemClick(View view, int position);
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
 
-        View view;
         private TextView title;
         private TextView introduction;
         private ImageView image;
         private TextView price;
 
-        ViewHolder(View view) {
-            super(view);
-            this.view = view;
-            title = (TextView) view.findViewById(R.id.title);
-            introduction = (TextView) view.findViewById(R.id.introduction);
-            price = (TextView) view.findViewById(R.id.price);
-            image = (ImageView) view.findViewById(R.id.image);
+        ViewHolder(View itemView) {
+            super(itemView);
+            title = (TextView) itemView.findViewById(R.id.title);
+            introduction = (TextView) itemView.findViewById(R.id.introduction);
+            price = (TextView) itemView.findViewById(R.id.price);
+            image = (ImageView) itemView.findViewById(R.id.image);
         }
     }
 }

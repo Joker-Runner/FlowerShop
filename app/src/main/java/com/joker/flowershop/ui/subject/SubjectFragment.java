@@ -28,8 +28,10 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
+import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 /**
@@ -40,10 +42,15 @@ public class SubjectFragment extends Fragment {
     //    private SwipeRefreshLayout swipeRefreshLayout;
     private RecyclerView flowerList;
 
+    private int categoryId;
+
     public SubjectFragment() {
         // Required empty public constructor
     }
 
+    public void setCategory(int categoryId){
+        this.categoryId = categoryId;
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -58,6 +65,21 @@ public class SubjectFragment extends Fragment {
      * 初始化刷新列表
      */
     public void initListView() {
+
+//        OkHttpUtils.post().url(Constants.getURL()+"/category_flower_list")
+//                .addParams("", String.valueOf(categoryId))
+//                .build().execute(new StringCallback() {
+//            @Override
+//            public void onError(Call call, Exception e, int id) {
+//
+//            }
+//
+//            @Override
+//            public void onResponse(String response, int id) {
+//
+//            }
+//        });
+
 //        swipeRefreshLayout.setRefreshing(true);
         UserFlowerListTask userFlowerListTask = new UserFlowerListTask();
         userFlowerListTask.execute((Void) null);
@@ -108,8 +130,10 @@ public class SubjectFragment extends Fragment {
         @Override
         protected ArrayList<FlowerBean> doInBackground(Void... params) {
             try {
+                RequestBody requestBody = new FormBody.Builder()
+                        .add("category_id", String.valueOf(categoryId)).build();
                 Request request = new Request.Builder()
-                        .url(Constants.getURL() + "/flower_list").get().build();
+                        .url(Constants.getURL() + "/category_flower_list").post(requestBody).build();
                 Response response = new OkHttpClient().newCall(request).execute();
                 flowerListJson = response.body().string();
                 Log.i("TAG", flowerListJson);

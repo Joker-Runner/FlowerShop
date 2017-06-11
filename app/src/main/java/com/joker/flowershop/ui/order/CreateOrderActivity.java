@@ -4,10 +4,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -15,7 +14,9 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
 import com.joker.flowershop.R;
 import com.joker.flowershop.bean.FlowerBean;
@@ -24,10 +25,11 @@ import com.joker.flowershop.ui.CreateNewAddressActivity;
 import com.joker.flowershop.ui.FlowerDetailActivity;
 import com.joker.flowershop.ui.MainActivity;
 import com.joker.flowershop.utils.Constants;
-import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -39,21 +41,34 @@ public class CreateOrderActivity extends AppCompatActivity implements View.OnCli
     private FlowerBean flowerBean;
     private ReceiverBean receiverBean;
 
-    private LinearLayout receiverLayout;
-    private TextView addresseeText;
-    private TextView telephoneText;
-    private TextView addressText;
-    private EditText remarkEdit;
+    @BindView(R.id.receiver)
+    LinearLayout receiverLayout;
+    @BindView(R.id.addressee)
+    TextView addresseeText;
+    @BindView(R.id.telephone)
+    TextView telephoneText;
+    @BindView(R.id.address)
+    TextView addressText;
+    @BindView(R.id.remark)
+    EditText remarkEdit;
 
-    private LinearLayout flowerLayout;
-    private ImageView image;
-    private TextView title;
-    private TextView introduction;
-    private TextView price;
+    @BindView(R.id.flower)
+    LinearLayout flowerLayout;
+    @BindView(R.id.image)
+    ImageView image;
+    @BindView(R.id.title)
+    TextView title;
+    @BindView(R.id.introduction)
+    TextView introduction;
+    @BindView(R.id.price)
+    TextView price;
 
-    private TextView totalPrice;
-    private Button order;
+    @BindView(R.id.total_price)
+    TextView totalPrice;
+    @BindView(R.id.order)
+    Button order;
 
+    private String receiverJson;
     private String addressee;
     private String telephone;
     private String address;
@@ -67,6 +82,7 @@ public class CreateOrderActivity extends AppCompatActivity implements View.OnCli
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_order);
+        ButterKnife.bind(this);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
@@ -74,21 +90,6 @@ public class CreateOrderActivity extends AppCompatActivity implements View.OnCli
         flowerBean = (FlowerBean) intent.getSerializableExtra("flower");
 
         sharedPreferences = getSharedPreferences(Constants.INIT_SETTING_SHARED, MODE_APPEND);
-
-        receiverLayout = (LinearLayout) findViewById(R.id.receiver);
-        addresseeText = (TextView) findViewById(R.id.addressee);
-        telephoneText = (TextView) findViewById(R.id.telephone);
-        addressText = (TextView) findViewById(R.id.address);
-        remarkEdit = (EditText) findViewById(R.id.remark);
-
-        flowerLayout = (LinearLayout) findViewById(R.id.flower);
-        image = (ImageView) findViewById(R.id.image);
-        title = (TextView) findViewById(R.id.title);
-        introduction = (TextView) findViewById(R.id.introduction);
-        price = (TextView) findViewById(R.id.price);
-
-        totalPrice= (TextView) findViewById(R.id.total_price);
-        order = (Button) findViewById(R.id.order);
 
         receiverLayout.setOnClickListener(this);
         flowerLayout.setOnClickListener(this);
@@ -103,7 +104,7 @@ public class CreateOrderActivity extends AppCompatActivity implements View.OnCli
     }
 
     public void initView() {
-        String receiverJson = sharedPreferences.getString(Constants.DEFAULT_RECEIVER, null);
+        receiverJson = sharedPreferences.getString(Constants.DEFAULT_RECEIVER, null);
         if (receiverJson != null) {
             receiverBean = new Gson().fromJson(receiverJson, ReceiverBean.class);
             addresseeText.setText(receiverBean.getAddressee());
@@ -115,19 +116,43 @@ public class CreateOrderActivity extends AppCompatActivity implements View.OnCli
         title.setText(flowerBean.getTitle());
         introduction.setText(flowerBean.getIntroduction());
         price.setText("￥" + flowerBean.getPrice());
-        Picasso.with(this).load(flowerBean.getImageURL()).resize(150, 150).centerCrop().into(image);
-        totalPrice.setText(flowerBean.getPrice()+"");
+        Glide.with(this).load(flowerBean.getImageURL()).centerCrop().into(image);
+        totalPrice.setText(flowerBean.getPrice() + "");
     }
 
     public void attemptCreateOrder() {
-        remark = remarkEdit.getText().toString();
-        if (createOrderTask == null) {
-            createOrderTask = new CreateOrderTask(receiverBean.getAddressee(),
-                    receiverBean.getTelephone(), receiverBean.getAddress(), remark,
-                    flowerBean.getId(), sharedPreferences.getInt(Constants.LOGGED_USER_ID, 0),
-                    Constants.WAITING_FOR_DELIVERY);
-            createOrderTask.execute((Void) null);
+        if (receiverJson == null) {
+            Toast.makeText(CreateOrderActivity.this, "请填写收货地址", Toast.LENGTH_LONG).show();
+        } else {
+            areYouSureOrder();
         }
+    }
+
+    public void areYouSureOrder() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(CreateOrderActivity.this);
+        builder.setTitle("确定要下单吗？");
+        builder.setMessage("这里省去了付款的流程");
+        builder.setCancelable(false);
+        builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                remark = remarkEdit.getText().toString();
+                if (createOrderTask == null) {
+                    createOrderTask = new CreateOrderTask(receiverBean.getAddressee(),
+                            receiverBean.getTelephone(), receiverBean.getAddress(), remark,
+                            flowerBean.getId(), sharedPreferences.getInt(Constants.LOGGED_USER_ID, 0),
+                            Constants.WAITING_FOR_DELIVERY);
+                    createOrderTask.execute((Void) null);
+                }
+            }
+        });
+        builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+            }
+        });
+        builder.create().show();
     }
 
     @Override
@@ -170,8 +195,8 @@ public class CreateOrderActivity extends AppCompatActivity implements View.OnCli
         private int userId;
         private int order_status;
 
-        public CreateOrderTask(String addressee, String telephone, String address,
-                               String remark, int flowerId, int userId, int order_status) {
+        CreateOrderTask(String addressee, String telephone, String address,
+                        String remark, int flowerId, int userId, int order_status) {
             this.addressee = addressee;
             this.telephone = telephone;
             this.address = address;

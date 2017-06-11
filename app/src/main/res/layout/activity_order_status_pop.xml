@@ -3,37 +3,54 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#33616161"
+    android:orientation="vertical"
+    android:background="#CC000000"
+    android:gravity="center_horizontal"
     tools:context="com.joker.flowershop.ui.order.OrderStatusPopActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginBottom="@dimen/card_margin"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:layout_marginLeft="32dp"
         android:layout_marginRight="32dp"
         android:layout_marginTop="@dimen/card_margin"
         android:background="@drawable/pop_activity_bg"
         android:divider="@drawable/divider"
         android:orientation="vertical"
-        android:padding="@dimen/title_margin"
         android:showDividers="middle">
 
-        <TextView
-            android:id="@+id/order_status_text"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="@dimen/title_margin"
-            android:clickable="true"
-            android:text="订单状态"
-            android:textColor="@color/colorAccent"
-            android:textSize="18sp" />
+            android:padding="@dimen/activity_horizontal_margin"
+            android:background="@drawable/pop_title_bg">
 
-        <ListView
+            <TextView
+                android:id="@+id/order_status_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/title_margin"
+                android:clickable="true"
+                android:text="订单状态"
+                android:textColor="@color/colorWhite"
+                android:textSize="18sp" />
+
+        </LinearLayout>
+
+        <android.support.v7.widget.RecyclerView
             android:id="@+id/order_status_list"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 
     </LinearLayout>
+
+    <ImageView
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_margin="@dimen/activity_horizontal_margin"
+        android:src="@drawable/ic_close_white_48dp"
+        android:padding="@dimen/title_margin"
+        android:background="@drawable/pop_activity_close_bg"/>
 
 </LinearLayout>
